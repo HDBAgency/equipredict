@@ -82,7 +82,7 @@ function HorseCard({ entry, rank }: { entry: DetailedEntry; rank: number }) {
   const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'
 
   return (
-    <div className={`bg-eq-card border rounded-2xl p-6 ${entry.isRecommended ? 'border-eq-green/40' : 'border-eq-border'}`}>
+    <div className={`bg-eq-card border rounded-2xl p-6 ${entry.rank === 1 ? 'border-eq-green/40' : 'border-eq-border'}`}>
 
       {/* Header cheval */}
       <div className="flex items-start justify-between gap-4 mb-5">
@@ -90,8 +90,8 @@ function HorseCard({ entry, rank }: { entry: DetailedEntry; rank: number }) {
           <span className="text-2xl">{rankEmoji}</span>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg font-black text-white">{entry.number}. {entry.horseName}</h3>
-              {entry.isRecommended && (
+              <h3 className="text-lg font-black text-white">{entry.rank}. {entry.horseName}</h3>
+              {entry.rank === 1 && (
                 <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-eq-green/15 text-eq-green border border-eq-green/30">
                   <Brain className="w-2.5 h-2.5" /> Favori IA
                 </span>
