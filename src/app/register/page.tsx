@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { TrendingUp, Eye, EyeOff, ArrowRight, Loader2, Check } from 'lucide-react'
 // TODO: import { createClient } from '@/lib/supabase/client'
@@ -30,7 +30,7 @@ const PLAN_LABELS: Record<string, string> = {
   pro: 'Pro',
 }
 
-export default function RegisterPage() {
+function RegisterForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const plan = searchParams.get('plan') ?? 'free'
@@ -192,5 +192,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <RegisterForm />
+    </Suspense>
   )
 }
