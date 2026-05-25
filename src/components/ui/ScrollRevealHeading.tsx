@@ -1,14 +1,15 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 interface Props {
   line1: string
   line2: string
   className?: string
+  style?: React.CSSProperties
 }
 
-export default function ScrollRevealHeading({ line1, line2, className = '' }: Props) {
+export default function ScrollRevealHeading({ line1, line2, className = '', style }: Props) {
   const ref = useRef<HTMLHeadingElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -22,7 +23,7 @@ export default function ScrollRevealHeading({ line1, line2, className = '' }: Pr
   }, [])
 
   return (
-    <h2 ref={ref} className={`text-5xl sm:text-7xl font-black text-center mb-6 uppercase ${className}`}>
+    <h2 ref={ref} className={`text-5xl sm:text-7xl font-black text-center mb-6 uppercase ${className}`} style={style}>
       <span
         className="block"
         style={{

@@ -19,7 +19,7 @@ const WEATHER_ICON: Record<string, React.ReactNode> = {
 
 const RACE_TYPE_BADGE: Record<string, { label: string; color: string }> = {
   plat:         { label: 'Plat',     color: 'bg-eq-blue/15   text-eq-blue   border-eq-blue/30'   },
-  trot:         { label: 'Trot',     color: 'bg-eq-violet/15 text-eq-violet border-eq-violet/30' },
+  trot:         { label: 'Trot',     color: 'bg-eq-green/15 text-eq-green border-eq-green/30' },
   obstacle:     { label: 'Obstacle', color: 'bg-eq-amber/15  text-eq-amber  border-eq-amber/30'  },
   steeplechase: { label: 'Steeple',  color: 'bg-eq-red/15    text-eq-red    border-eq-red/30'    },
 }
@@ -122,8 +122,8 @@ export const LiveRaceCard = memo(function LiveRaceCard({ race, flashDown, flashU
     : race.horses.slice(0, 3)
 
   return (
-    <Link href={`/courses/${race.id}`} className="group block">
-      <article className="bg-eq-card border border-eq-border rounded-xl p-5 hover:border-eq-border-bright hover:bg-eq-card-hover transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/40 flex flex-col gap-3">
+    <div className="group block">
+      <article className="bg-eq-card border border-eq-border rounded-xl p-5 flex flex-col gap-3">
 
         {/* Header : badge type + heure */}
         <div className="flex items-start justify-between gap-3">
@@ -137,13 +137,13 @@ export const LiveRaceCard = memo(function LiveRaceCard({ race, flashDown, flashU
                 <span className="text-[10px] text-eq-muted truncate">{race.category}</span>
               )}
             </div>
-            <h3 className="font-bold text-eq-text text-sm truncate group-hover:text-eq-violet-light transition-colors">
+            <h3 className="font-bold text-eq-text text-sm truncate group-hover:text-eq-green-light transition-colors">
               {race.name}
             </h3>
           </div>
           <div className="text-right shrink-0">
             <div className="flex items-center gap-1 text-sm font-mono font-bold text-eq-text">
-              <Clock className="w-3.5 h-3.5 text-eq-violet" />
+              <Clock className="w-3.5 h-3.5 text-eq-green" />
               {formatTime(race.startTime)}
             </div>
           </div>
@@ -203,11 +203,8 @@ export const LiveRaceCard = memo(function LiveRaceCard({ race, flashDown, flashU
               <span className="text-eq-amber font-medium">{formatPrize(race.prize)}</span>
             )}
           </div>
-          <div className="flex items-center gap-1 text-xs font-semibold text-eq-violet group-hover:gap-2 transition-all">
-            Voir <ArrowRight className="w-3.5 h-3.5" />
-          </div>
         </div>
       </article>
-    </Link>
+    </div>
   )
 })

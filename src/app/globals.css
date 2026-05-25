@@ -50,8 +50,8 @@ body {
 /* ─── Scrollbar ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: #0F0F1A; }
-::-webkit-scrollbar-thumb { background: #2D2D48; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #7C3AED; }
+::-webkit-scrollbar-thumb { background: #10B981; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #059669; }
 
 /* ─── Animations ─────────────────────────────────────────────────────────── */
 @keyframes gradient-x {

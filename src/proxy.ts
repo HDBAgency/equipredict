@@ -49,7 +49,7 @@ export async function proxy(request: NextRequest) {
 
   // Redirige vers le dashboard si déjà connecté et sur /login ou /register
   if (user && (pathname === '/login' || pathname === '/register')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL('/dashboard-gratuit', request.url))
   }
 
   // TODO: vérification du plan d'abonnement pour les routes premium API

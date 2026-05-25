@@ -3,7 +3,7 @@ import { TrendingUp, Shield } from 'lucide-react'
 
 const LINKS = {
   Produit: [
-    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/dashboard-gratuit', label: 'Dashboard' },
     { href: '/pricing', label: 'Tarifs' },
     { href: '/courses/race-001', label: 'Exemple de course' },
   ],

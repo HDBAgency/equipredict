@@ -4,7 +4,10 @@ import { ArrowRight, TrendingUp, BarChart3, Zap, Shield, Target, Users, Star } f
 import ScrollRevealTitle from '@/components/ui/ScrollRevealTitle'
 import HeroTitle from '@/components/ui/HeroTitle'
 import ScrollRevealHeading from '@/components/ui/ScrollRevealHeading'
+import ScrollRevealInline from '@/components/ui/ScrollRevealInline'
 import VideoCarousel from '@/components/ui/VideoCarousel'
+import SmartCTAButton from '@/components/ui/SmartCTAButton'
+import LogoutButton from '@/components/ui/LogoutButton'
 
 const STATS = [
   { value: '87.4%', label: 'Précision moyenne', icon: Target },
@@ -51,20 +54,18 @@ const TESTIMONIALS = [
 
 export default function HomePage() {
   return (
+    <>
+    <div className="fixed top-0 right-0 z-50 p-4">
+      <LogoutButton />
+    </div>
     <div className="flex flex-col">
 
       {/* Hero */}
       <section className="relative overflow-hidden -mt-16" style={{ minHeight: '1080px', width: '100%' }}>
-        {/* Photo de fond */}
         <div className="absolute inset-0 pointer-events-none">
-          <img
-            src="/photo/4.jpg"
-            alt=""
-            style={{ width: '1920px', height: '1080px', maxWidth: 'none', position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)' }}
-          />
+          <img src="/photo/haut1.jpg" alt="" style={{ width: '1920px', height: '1080px', maxWidth: 'none', position: 'absolute', top: '-80px', left: '50%', transform: 'translateX(-50%)' }} />
           <div className="absolute inset-0 bg-black/60" />
         </div>
-
         <div className="relative flex items-center justify-center" style={{ minHeight: '1080px', paddingBottom: '80px' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <HeroTitle />
@@ -75,14 +76,7 @@ export default function HomePage() {
           </p>
 
           <div className="flex items-center justify-center animate-fade-up" style={{ animationDelay: '0.3s' }}>
-            <Link
-              href="/pricing"
-              className="flex items-center gap-2 text-white font-bold px-8 py-4 rounded-xl transition-all hover:shadow-2xl hover:-translate-y-0.5 text-base"
-              style={{ background: 'linear-gradient(135deg, #064E3B, #10B981, #34D399, #6EE7B7)' }}
-            >
-              VOIR LES PRONOSTICS DU JOUR
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+            <SmartCTAButton />
           </div>
 
           <p className="text-xs text-white mt-6 flex items-center justify-center gap-1.5">
@@ -103,11 +97,12 @@ export default function HomePage() {
         </div>
       </section>
 
+
       {/* PMU App */}
-      <section className="relative bg-black" style={{ height: '1080px' }}>
+      <section className="relative" style={{ height: '1080px' }}>
         <ScrollRevealTitle />
         <img
-          src="/photo/pmu.png"
+          src="/photo/pmu_nobg.png"
           alt="PMU"
           style={{ height: '700px', width: 'auto', position: 'absolute', top: 'calc(50% + 100px)', left: '50%', transform: 'translate(-50%, -50%)' }}
         />
@@ -168,7 +163,7 @@ export default function HomePage() {
       </section>
 
       {/* Partenaires */}
-      <section className="bg-black pt-40 pb-10 overflow-hidden border-t border-white/5">
+      <section className="pt-60 pb-10 overflow-hidden">
 <div className="overflow-hidden">
           <div className="animate-marquee whitespace-nowrap">
             {[
@@ -185,38 +180,23 @@ export default function HomePage() {
               { src: '/photo/partenaires/RMC_2025.svg.png', alt: 'RMC' },
               { src: '/photo/partenaires/23fglogo820blanc.png', alt: 'Partenaire' },
             ].map((logo, i) => (
-              <img key={i} src={logo.src} alt={logo.alt} style={{ height: '48px', width: 'auto', display: 'inline-block', marginRight: '100px', opacity: 0.7 }} />
+              <img key={i} src={logo.src} alt={logo.alt} style={{ height: '48px', width: 'auto', display: 'inline-block', marginRight: '100px', filter: 'brightness(0) invert(1)' }} />
             ))}
           </div>
         </div>
       </section>
 
       {/* Vidéos TikTok — carousel 3D */}
-      <section className="bg-black pt-60 pb-20">
+      <section className="pt-60 pb-20">
         <div className="text-center mb-16">
           <ScrollRevealHeading line1="LES COURSES" line2="EN VIDÉO" />
         </div>
         <VideoCarousel videos={VIDEOS} />
       </section>
 
-      {/* Stats sources de données */}
-      <section className="relative overflow-hidden pt-40 pb-24 border-t border-white/5">
-        <img
-          src="/photo/1.jpg"
-          alt=""
-          style={{ width: '1920px', height: '100%', minHeight: '400px', maxWidth: 'none', position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', objectFit: 'cover' }}
-        />
-        <div className="absolute inset-0 bg-black/65" />
-        <div className="relative z-10 max-w-4xl mx-auto px-8 text-center">
-          <ScrollRevealHeading line1="NOUS ANALYSONS" line2="+150 SOURCES" className="mb-6" />
-          <p className="text-white font-bold text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
-            Des millions de données hippiques analysées à partir de plus de 150 sources pour prédire chaque course.
-          </p>
-        </div>
-      </section>
 
       {/* Testimonials */}
-      <section className="bg-black pt-60 pb-24 border-t border-white/5">
+      <section className="pt-40 pb-24 relative z-10">
         <div className="px-8">
           <ScrollRevealHeading line1={"Ce qu'en disent"} line2="nos utilisateurs" />
           <div className="grid grid-cols-1 md:grid-cols-3 max-w-7xl mx-auto mt-20" style={{ gap: '25px' }}>
@@ -245,28 +225,66 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Photo 2 */}
-      <section className="relative overflow-hidden" style={{ height: '1080px' }}>
-        <img
-          src="/photo/2.jpg"
-          alt=""
-          style={{ width: '1920px', height: '1080px', maxWidth: 'none', position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)' }}
-        />
-        <div className="absolute inset-0 bg-black/60" />
-      </section>
+      {/* FAQ + CTA */}
+      <div className="relative">
 
-      {/* Photo 3 */}
-      <section className="relative overflow-hidden" style={{ height: '400px' }}>
-        <img
-          src="/photo/3.jpg"
-          alt=""
-          style={{ width: '1920px', height: '1080px', maxWidth: 'none', position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)' }}
-        />
-        <div className="absolute inset-0 bg-black/60" />
-        <p className="absolute bottom-3 left-0 right-0 text-center text-[16px] text-white font-bold">
-          © 2026 EquiPrédict. Tous droits réservés.
-        </p>
-      </section>
+        {/* FAQ */}
+        <section className="pt-48 pb-48 relative" style={{ zIndex: 2 }}>
+          <div className="mx-auto px-8" style={{ maxWidth: '1000px' }}>
+            <div className="text-center mb-16">
+              <ScrollRevealInline text1="QUESTIONS" text2="FRÉQUENTES" />
+              <p className="text-white font-bold mt-6">Une réponse claire à toutes vos questions sur EquiPredict.</p>
+            </div>
+            <div className="space-y-4">
+              {[
+                { q: "Comment fonctionnent les prédictions EquiPredict ?", a: "Notre IA analyse 7 facteurs clés pour chaque cheval : forme récente, distance, terrain, jockey, entraîneur, évolution des cotes et régularité. Elle génère un top 3 avec probabilités et niveau de confiance (Faible / Moyen / Fort)." },
+                { q: "Les prédictions sont-elles fiables ?", a: "Nos prédictions affichent une précision moyenne de 87,4% sur le top 3. Le niveau de confiance FORT est le plus fiable. EquiPredict est un outil d'aide à la décision — il ne garantit aucun gain." },
+                { q: "Combien de courses sont couvertes par jour ?", a: "EquiPredict couvre plus de 50 courses hippiques par jour, issues des hippodromes français (PMU) et internationaux, en plat, trot, obstacle et steeple-chase." },
+                { q: "À quelle heure sont disponibles les prédictions ?", a: "Les prédictions sont disponibles dès l'ouverture des cotes, généralement 2 à 3 heures avant chaque départ. Elles sont mises à jour en temps réel jusqu'au départ." },
+                { q: "Est-ce que EquiPredict est gratuit ?", a: "Une version gratuite est disponible avec 3 courses analysées par jour. Les abonnements Premium et Pro donnent accès à toutes les courses, l'historique complet et les statistiques avancées." },
+                { q: "EquiPredict encourage-t-il les paris ?", a: "Non. EquiPredict est un outil de prédiction informatif. Nous encourageons le jeu responsable — réservé aux personnes de 18 ans et plus. Ne misez que ce que vous pouvez vous permettre de perdre." },
+              ].map(({ q, a }, i) => (
+                <details key={i} className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                  <summary className="flex items-center justify-between px-6 py-5 cursor-pointer list-none font-bold text-white text-base select-none">
+                    {q}
+                    <span className="ml-4 shrink-0 w-6 h-6 rounded-full border border-white/20 flex items-center justify-center text-white text-lg transition-transform group-open:rotate-45">+</span>
+                  </summary>
+                  <p className="px-6 pb-5 text-white/70 text-sm leading-relaxed">{a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA final */}
+        <section className="py-24 text-center relative" style={{ zIndex: 2 }}>
+          <div className="max-w-7xl mx-auto px-8">
+            <ScrollRevealHeading line1="PRÊT À ANALYSER VOS COURSES" line2="AUTREMENT ?" style={{ fontSize: '120px', lineHeight: '1' }} />
+            <p className="text-white font-bold text-base sm:text-lg mb-10">
+              Accédez aux analyses IA, statistiques avancées et prédictions de course dès maintenant.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                href="/pricing"
+                className="flex items-center gap-2 text-white font-bold px-8 py-4 rounded-xl text-base transition-all hover:-translate-y-0.5 hover:shadow-2xl"
+                style={{ background: 'linear-gradient(135deg, #064E3B, #10B981, #34D399, #6EE7B7)' }}
+              >
+                COMMENCER MAINTENANT <ArrowRight className="w-5 h-5" />
+              </Link>
+              <Link
+                href="/login"
+                className="btn-connexion text-white font-black text-base tracking-tight px-8 py-4 border border-white/20 rounded-xl"
+              >
+                <span className="btn-connexion-text">CONNEXION</span>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <p className="text-center text-xs font-bold text-white py-6">©2026 - EquiPrédict, Tout droit réservé.</p>
+
     </div>
+    </>
   )
 }

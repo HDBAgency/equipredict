@@ -51,7 +51,7 @@ export default async function CoursePage({
 
       {/* Breadcrumb */}
       <Link
-        href="/dashboard"
+        href="/dashboard-gratuit"
         className="inline-flex items-center gap-1.5 text-sm text-eq-muted hover:text-eq-text transition-colors mb-6"
       >
         <ArrowLeft className="w-4 h-4" />

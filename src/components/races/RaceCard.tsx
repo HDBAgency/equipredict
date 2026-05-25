@@ -11,7 +11,7 @@ const WEATHER_ICON: Record<string, React.ReactNode> = {
 
 const RACE_TYPE_BADGE: Record<string, { label: string; color: string }> = {
   plat:        { label: 'Plat',        color: 'bg-eq-blue/15   text-eq-blue   border-eq-blue/30'   },
-  trot:        { label: 'Trot',        color: 'bg-eq-violet/15 text-eq-violet border-eq-violet/30' },
+  trot:        { label: 'Trot',        color: 'bg-eq-green/15 text-eq-green border-eq-green/30' },
   obstacle:    { label: 'Obstacle',    color: 'bg-eq-amber/15  text-eq-amber  border-eq-amber/30'  },
   steeplechase:{ label: 'Steeple',     color: 'bg-eq-red/15    text-eq-red    border-eq-red/30'    },
 }
@@ -49,13 +49,13 @@ export function RaceCard({ race }: { race: Race }) {
               </span>
               <span className="text-[11px] text-eq-muted">R{race.raceNumber}</span>
             </div>
-            <h3 className="font-bold text-eq-text text-base truncate group-hover:text-eq-violet-light transition-colors">
+            <h3 className="font-bold text-eq-text text-base truncate group-hover:text-eq-green-light transition-colors">
               {race.name}
             </h3>
           </div>
           <div className="text-right shrink-0">
             <div className="flex items-center gap-1 text-sm font-mono font-bold text-eq-text">
-              <Clock className="w-3.5 h-3.5 text-eq-violet" />
+              <Clock className="w-3.5 h-3.5 text-eq-green" />
               {formatTime(race.startTime)}
             </div>
             <div className="text-xs text-eq-muted mt-0.5">{race.category}</div>
@@ -93,7 +93,7 @@ export function RaceCard({ race }: { race: Race }) {
             </span>
             <span className="text-eq-amber font-medium">{formatPrize(race.prize)}</span>
           </div>
-          <div className="flex items-center gap-1 text-xs font-semibold text-eq-violet group-hover:gap-2 transition-all">
+          <div className="flex items-center gap-1 text-xs font-semibold text-eq-green group-hover:gap-2 transition-all">
             Voir <ArrowRight className="w-3.5 h-3.5" />
           </div>
         </div>

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { TrendingUp, Eye, EyeOff, ArrowRight, Loader2, Check } from 'lucide-react'
-// TODO: import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 
 const PLAN_PERKS: Record<string, string[]> = {
   free: [
@@ -34,9 +34,10 @@ function RegisterForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const plan = searchParams.get('plan') ?? 'free'
+  const emailFromUrl = searchParams.get('email') ?? ''
 
   const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(emailFromUrl)
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -50,17 +51,16 @@ function RegisterForm() {
     setLoading(true)
     setError('')
     try {
-      // TODO: const supabase = createClient()
-      // const { error } = await supabase.auth.signUp({
-      //   email,
-      //   password,
-      //   options: { data: { name } }
-      // })
-      // if (error) throw error
-      await new Promise(r => setTimeout(r, 1200))
-      localStorage.setItem('eq_plan', plan)
+      const supabase = createClient()
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name, plan } }
+      })
+      if (signUpError) throw signUpError
       setSuccess(true)
-      setTimeout(() => router.push('/dashboard'), 1500)
+      const redirect = plan === 'premium' || plan === 'pro' ? '/dashboard-premium' : '/dashboard-gratuit'
+      setTimeout(() => router.push(redirect), 1500)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur lors de l'inscription")
     } finally {
@@ -77,10 +77,10 @@ function RegisterForm() {
           </div>
           <h1 className="text-2xl font-black text-eq-text mb-2">Compte créé !</h1>
           <p className="text-eq-muted text-sm mb-2">
-            Plan <span className="text-eq-violet font-semibold">{PLAN_LABELS[plan] ?? plan}</span> activé.
+            Plan <span className="text-eq-green font-semibold">{PLAN_LABELS[plan] ?? plan}</span> activé.
           </p>
           <p className="text-eq-muted text-xs mb-6">Redirection vers le tableau de bord…</p>
-          <div className="w-5 h-5 rounded-full border-2 border-eq-violet border-t-transparent animate-spin mx-auto" />
+          <div className="w-5 h-5 rounded-full border-2 border-eq-green border-t-transparent animate-spin mx-auto" />
         </div>
       </div>
     )
@@ -89,18 +89,10 @@ function RegisterForm() {
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-16 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-eq-violet/8 blur-3xl" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-eq-green/8 blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-md">
-        <div className="flex justify-center mb-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-eq-violet flex items-center justify-center glow-violet">
-              <TrendingUp className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-black">Equi<span className="text-gradient">Predict</span></span>
-          </Link>
-        </div>
+      <div className="relative w-full max-w-md -mt-16">
 
         <div className="bg-eq-card border border-eq-border rounded-2xl p-8">
           <div className="text-center mb-6">
@@ -131,7 +123,7 @@ function RegisterForm() {
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="Votre prénom"
-                className="w-full bg-eq-surface border border-eq-border rounded-xl px-4 py-3 text-sm text-eq-text placeholder-eq-muted focus:outline-none focus:border-eq-violet focus:ring-1 focus:ring-eq-violet/30 transition-all"
+                className="w-full bg-eq-surface border border-eq-border rounded-xl px-4 py-3 text-sm text-eq-text placeholder-eq-muted focus:outline-none focus:border-eq-green focus:ring-1 focus:ring-eq-green/30 transition-all"
               />
             </div>
             <div>
@@ -142,7 +134,7 @@ function RegisterForm() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="vous@email.com"
-                className="w-full bg-eq-surface border border-eq-border rounded-xl px-4 py-3 text-sm text-eq-text placeholder-eq-muted focus:outline-none focus:border-eq-violet focus:ring-1 focus:ring-eq-violet/30 transition-all"
+                className="w-full bg-eq-surface border border-eq-border rounded-xl px-4 py-3 text-sm text-eq-text placeholder-eq-muted focus:outline-none focus:border-eq-green focus:ring-1 focus:ring-eq-green/30 transition-all"
               />
             </div>
             <div>
@@ -155,7 +147,7 @@ function RegisterForm() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="8 caractères minimum"
-                  className="w-full bg-eq-surface border border-eq-border rounded-xl px-4 py-3 pr-11 text-sm text-eq-text placeholder-eq-muted focus:outline-none focus:border-eq-violet focus:ring-1 focus:ring-eq-violet/30 transition-all"
+                  className="w-full bg-eq-surface border border-eq-border rounded-xl px-4 py-3 pr-11 text-sm text-eq-text placeholder-eq-muted focus:outline-none focus:border-eq-green focus:ring-1 focus:ring-eq-green/30 transition-all"
                 />
                 <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-eq-muted hover:text-eq-text">
                   {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -170,7 +162,7 @@ function RegisterForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-eq-violet hover:bg-eq-violet-light disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-all hover:shadow-lg hover:shadow-eq-violet/25 text-sm"
+              className="w-full flex items-center justify-center gap-2 bg-eq-green hover:bg-eq-green-light disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-all hover:shadow-lg hover:shadow-eq-green/25 text-sm"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
               {loading ? 'Création du compte...' : 'Créer mon compte gratuitement'}
@@ -178,14 +170,14 @@ function RegisterForm() {
 
             <p className="text-center text-[11px] text-eq-muted">
               En créant un compte, vous acceptez nos{' '}
-              <span className="text-eq-violet cursor-pointer">Conditions d&apos;utilisation</span>.
+              <span className="text-eq-green cursor-pointer">Conditions d&apos;utilisation</span>.
               {' '}Jeu responsable — 18+ uniquement.
             </p>
           </form>
 
           <p className="text-center text-sm text-eq-muted mt-5 pt-5 border-t border-eq-border">
             Déjà un compte ?{' '}
-            <Link href="/login" className="text-eq-violet hover:text-eq-violet-light font-semibold transition-colors">
+            <Link href="/login" className="text-eq-green hover:text-eq-green-light font-semibold transition-colors">
               Se connecter
             </Link>
           </p>

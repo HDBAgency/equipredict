@@ -52,20 +52,34 @@ export function PaywallGate({ children }: Props) {
   const [plan, setPlan] = useState<string | null | undefined>(undefined)
 
   useEffect(() => {
-    const stored = localStorage.getItem('eq_plan')
-    setPlan(stored ?? null)
+    async function checkAuth() {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('id', session.user.id)
+          .single()
+        setPlan(profile?.plan ?? 'free')
+      } else {
+        setPlan(null)
+      }
+    }
+    checkAuth()
   }, [])
 
   // Hydration en cours — évite le flash
   if (plan === undefined) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-6 h-6 rounded-full border-2 border-eq-violet border-t-transparent animate-spin" />
+        <div className="w-6 h-6 rounded-full border-2 border-eq-green border-t-transparent animate-spin" />
       </div>
     )
   }
 
-  // Abonné — accès direct
+  // Connecté — accès direct
   if (plan) return <>{children}</>
 
   // Pas d'abonnement — paywall
@@ -101,8 +115,8 @@ export function PaywallGate({ children }: Props) {
 
           {/* Header */}
           <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-eq-violet/20 border border-eq-violet/40 mb-5">
-              <Lock className="w-7 h-7 text-eq-violet" />
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-eq-green/20 border border-eq-green/40 mb-5">
+              <Lock className="w-7 h-7 text-eq-green" />
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-eq-text mb-3">
               Accédez aux prédictions IA
@@ -118,16 +132,16 @@ export function PaywallGate({ children }: Props) {
             {PLANS.map(({ id, name, icon: Icon, price, features, popular, color }) => (
               <div
                 key={id}
-                className={`relative rounded-2xl p-6 flex flex-col ${color} ${popular ? 'shadow-2xl shadow-eq-violet/20' : ''}`}
+                className={`relative rounded-2xl p-6 flex flex-col ${color} ${popular ? 'shadow-2xl shadow-eq-green/20' : ''}`}
               >
                 {popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-eq-violet rounded-full text-[11px] font-bold text-white whitespace-nowrap">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-eq-green rounded-full text-[11px] font-bold text-white whitespace-nowrap">
                     ⭐ Le plus populaire
                   </div>
                 )}
 
                 <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${popular ? 'bg-eq-violet text-white' : 'bg-eq-card border border-eq-border text-eq-muted'}`}>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${popular ? 'bg-eq-green text-white' : 'bg-eq-card border border-eq-border text-eq-muted'}`}>
                     <Icon className="w-4.5 h-4.5" />
                   </div>
                   <div>
@@ -151,7 +165,7 @@ export function PaywallGate({ children }: Props) {
                   href={id === 'free' ? '/register' : `/register?plan=${id}`}
                   className={`block text-center font-bold py-2.5 rounded-xl text-sm transition-all ${
                     popular
-                      ? 'bg-eq-violet hover:bg-eq-violet-light text-white hover:shadow-lg hover:shadow-eq-violet/30'
+                      ? 'bg-eq-green hover:bg-eq-green-light text-white hover:shadow-lg hover:shadow-eq-green/30'
                       : 'bg-eq-card border border-eq-border text-eq-text hover:border-eq-border-bright'
                   }`}
                 >
@@ -165,7 +179,7 @@ export function PaywallGate({ children }: Props) {
           {/* Footer */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
             <span className="text-eq-muted">Déjà un compte ?</span>
-            <Link href="/login" className="flex items-center gap-1.5 text-eq-violet hover:text-eq-violet-light font-semibold transition-colors">
+            <Link href="/login" className="flex items-center gap-1.5 text-eq-green hover:text-eq-green-light font-semibold transition-colors">
               <TrendingUp className="w-3.5 h-3.5" />
               Se connecter
             </Link>

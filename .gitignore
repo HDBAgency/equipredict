@@ -39,6 +39,9 @@ yarn-error.log*
 # videos (héberger sur Supabase Storage ou CDN)
 /public/videos/
 
+# photos source (non nécessaires en prod, seul /public est servi)
+/photo/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
