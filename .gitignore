@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# videos (héberger sur Supabase Storage ou CDN)
+/public/videos/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
