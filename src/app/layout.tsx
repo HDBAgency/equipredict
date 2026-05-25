@@ -1,0 +1,27 @@
+import type { Metadata } from 'next'
+import { GeistSans } from 'geist/font/sans'
+import { GeistMono } from 'geist/font/mono'
+import './globals.css'
+import { Navbar } from '@/components/layout/Navbar'
+
+export const metadata: Metadata = {
+  title: 'EquiPredict — Prédictions hippiques IA',
+  description: "L'intelligence artificielle au service des courses hippiques. Analysez, prédisez, optimisez.",
+  keywords: ['courses hippiques', 'prédictions', 'IA', 'PMU', 'trot', 'galop', 'obstacle'],
+  openGraph: {
+    title: 'EquiPredict',
+    description: "Prédictions hippiques alimentées par l'IA",
+    type: 'website',
+  },
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="fr" className={`${GeistSans.variable} ${GeistMono.variable} h-full`}>
+      <body className="min-h-full flex flex-col bg-eq-bg text-eq-text antialiased">
+        <Navbar />
+        <main className="flex-1 pt-16">{children}</main>
+      </body>
+    </html>
+  )
+}

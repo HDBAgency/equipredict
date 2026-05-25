@@ -1,0 +1,10 @@
+﻿import { chromium } from 'playwright';
+const browser = await chromium.launch();
+const page = await browser.newPage();
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.goto('http://localhost:3000/dashboard', { waitUntil: 'networkidle', timeout: 15000 });
+await page.screenshot({ path: 'C:/equipredict/screenshots/dashboard.png', fullPage: false });
+const cards = await page.locator('article').count();
+const skeleton = await page.locator('.animate-pulse').count();
+console.log('Cards:', cards, '| Skeletons:', skeleton);
+await browser.close();
