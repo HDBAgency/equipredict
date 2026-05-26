@@ -7,7 +7,7 @@ import AvatarUpload from '@/components/ui/AvatarUpload'
 const PLAN_LABELS: Record<string, { label: string; color: string }> = {
   free:    { label: 'Gratuit',  color: 'text-white border-white/20' },
   premium: { label: 'Premium', color: 'text-eq-green border-eq-green/40' },
-  pro:     { label: 'Pro',     color: 'text-purple-400 border-purple-400/40' },
+  pro:     { label: 'Pro',     color: 'text-eq-green border-eq-green/40' },
 }
 
 export default async function ComptePage() {
