@@ -89,7 +89,7 @@ function UpdatedAt({ updatedAt, source }: { updatedAt: string; source: string })
   )
 }
 
-export function LiveRacesGrid() {
+export function LiveRacesGrid({ plan = 'free' }: { plan?: string }) {
   const searchParams = useSearchParams()
   const activeType = (searchParams.get('type') ?? 'all') as RaceType | 'all'
 
@@ -97,20 +97,6 @@ export function LiveRacesGrid() {
   const [error, setError]           = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [showPast, setShowPast]     = useState(false)
-  const [plan, setPlan]             = useState<string>('free')
-
-  useEffect(() => {
-    async function loadPlan() {
-      const { createClient } = await import('@/lib/supabase/client')
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        const { data: profile } = await supabase.from('profiles').select('plan').eq('id', session.user.id).single()
-        if (profile?.plan) setPlan(profile.plan)
-      }
-    }
-    loadPlan()
-  }, [])
 
   const prevOddsRef = useRef<OddsMap>({})
   const [flashDown, setFlashDown] = useState<Set<string>>(new Set())

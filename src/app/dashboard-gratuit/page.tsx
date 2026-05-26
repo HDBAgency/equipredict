@@ -4,6 +4,7 @@ import { LiveRacesGrid } from '@/components/dashboard/LiveRacesGrid'
 import { PaywallGate } from '@/components/dashboard/PaywallGate'
 import { DashboardTabs } from '@/components/dashboard/DashboardTabs'
 import LogoutButton from '@/components/ui/LogoutButton'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function DashboardPage({
   searchParams,
@@ -12,6 +13,14 @@ export default async function DashboardPage({
 }) {
   const { type } = await searchParams
   const activeType = type ?? 'all'
+
+  const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  let plan = 'free'
+  if (session) {
+    const { data: profile } = await supabase.from('profiles').select('plan').eq('id', session.user.id).single()
+    plan = profile?.plan ?? 'free'
+  }
 
   const today = new Date().toLocaleDateString('fr-FR', {
     day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Paris',
@@ -59,7 +68,7 @@ export default async function DashboardPage({
             ))}
           </div>
         }>
-          <LiveRacesGrid />
+          <LiveRacesGrid plan={plan} />
         </Suspense>
 
         <p className="text-center text-xs text-eq-muted mt-10">
