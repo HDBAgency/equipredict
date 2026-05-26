@@ -80,15 +80,6 @@ export default function HomePage() {
             Prédictions informatives · 18+ · Jouez responsable
           </p>
 
-          <div className="flex justify-center mt-6">
-            <Link
-              href="/login"
-              className="btn-connexion text-white font-black text-lg tracking-tight px-6 py-2 border border-white/20 rounded-xl"
-            >
-              <span className="btn-connexion-text">CONNEXION</span>
-            </Link>
-          </div>
-
         </div>
         </div>
       </section>

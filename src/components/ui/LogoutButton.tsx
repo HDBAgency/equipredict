@@ -1,10 +1,22 @@
 'use client'
 
-import { LogOut } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function LogoutButton() {
   const router = useRouter()
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    async function check() {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      setLoggedIn(!!session)
+    }
+    check()
+  }, [])
 
   async function handleLogout() {
     const { createClient } = await import('@/lib/supabase/client')
@@ -13,13 +25,25 @@ export default function LogoutButton() {
     router.push('/')
   }
 
+  if (loggedIn === null) return null
+
+  if (!loggedIn) {
+    return (
+      <Link
+        href="/login"
+        className="px-4 py-2 rounded-xl text-sm font-black text-white border border-white/20 hover:bg-white/10 transition-all"
+      >
+        CONNEXION
+      </Link>
+    )
+  }
+
   return (
     <button
       onClick={handleLogout}
-      className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white border border-white/20 hover:bg-eq-green hover:border-eq-green transition-all"
+      className="px-4 py-2 rounded-xl text-sm font-black text-white border border-white/20 hover:bg-eq-red hover:border-eq-red transition-all"
     >
-      <LogOut className="w-4 h-4" />
-      Déconnexion
+      DECONNEXION
     </button>
   )
 }
