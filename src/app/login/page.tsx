@@ -20,7 +20,7 @@ const [email, setEmail] = useState('')
     setError('')
     try {
       const supabase = createClient()
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) {
         if (signInError.message.includes('Invalid login credentials') || signInError.message.includes('invalid_credentials')) {
           router.push(`/register?email=${encodeURIComponent(email)}`)
@@ -28,7 +28,11 @@ const [email, setEmail] = useState('')
         }
         throw signInError
       }
-      router.push('/dashboard-gratuit')
+      const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user!.id).single()
+      const plan = profile?.plan ?? 'free'
+      if (plan === 'pro') router.push('/dashboard-pro')
+      else if (plan === 'premium') router.push('/dashboard-premium')
+      else router.push('/dashboard-gratuit')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erreur de connexion')
     } finally {
