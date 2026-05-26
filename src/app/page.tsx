@@ -139,7 +139,7 @@ export default function HomePage() {
       </section>
 
       {/* Partenaires */}
-      <section className="pt-10 sm:pt-24 lg:pt-60 pb-10 overflow-hidden">
+      <section className="pt-32 sm:pt-24 lg:pt-60 pb-10 overflow-hidden">
         <div className="overflow-hidden">
           <div className="animate-marquee whitespace-nowrap">
             {[
