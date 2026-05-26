@@ -146,7 +146,9 @@ export default function PricingPage() {
         <div className="px-6 py-4 border-b border-eq-border">
           <h2 className="font-bold text-white">Comparaison détaillée</h2>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-eq-border">
@@ -179,6 +181,38 @@ export default function PricingPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile layout — une ligne par fonctionnalité, 3 valeurs en dessous */}
+        <div className="sm:hidden divide-y divide-eq-border/50">
+          {/* En-têtes plans */}
+          <div className="grid grid-cols-3 px-4 py-3 border-b border-eq-border">
+            {PLANS.map(({ name, popular }) => (
+              <div key={name} className={`text-center text-xs font-bold ${popular ? 'text-eq-green' : 'text-white'}`}>
+                {name}
+              </div>
+            ))}
+          </div>
+          {FEATURE_ROWS.map(({ label, key, format }, i) => (
+            <div key={key} className={`px-4 py-3 ${i % 2 !== 0 ? 'bg-eq-surface/30' : ''}`}>
+              <p className="text-xs text-white/60 mb-2">{label}</p>
+              <div className="grid grid-cols-3 gap-2">
+                {PLANS.map(({ id }) => {
+                  const val = PLAN_FEATURES[id][key]
+                  const formatted = format(val)
+                  const isCheck = formatted === '✓'
+                  const isCross = formatted === '✗'
+                  return (
+                    <div key={id} className="flex justify-center">
+                      {isCheck ? <Check className="w-4 h-4 text-eq-green" /> :
+                       isCross ? <X className="w-4 h-4 text-white/40" /> :
+                       <span className="text-xs font-semibold text-white text-center">{formatted}</span>}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
