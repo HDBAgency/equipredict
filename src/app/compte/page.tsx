@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { User, CreditCard, LogOut } from 'lucide-react'
 import LogoutButton from '@/components/ui/LogoutButton'
+import AvatarUpload from '@/components/ui/AvatarUpload'
 
 const PLAN_LABELS: Record<string, { label: string; color: string }> = {
   free:    { label: 'Gratuit',  color: 'text-white border-white/20' },
@@ -14,11 +15,12 @@ export default async function ComptePage() {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('name, plan, created_at').eq('id', session.user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('name, plan, created_at, avatar_url').eq('id', session.user.id).single()
 
   const name: string = profile?.name ?? ''
   const plan: string = profile?.plan ?? 'free'
   const email: string = session.user.email ?? ''
+  const avatarUrl: string | null = profile?.avatar_url ?? null
   const initials = name.slice(0, 2).toUpperCase()
   const createdAt = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -35,11 +37,8 @@ export default async function ComptePage() {
 
         {/* Avatar + nom */}
         <div className="flex flex-col items-center mb-10">
-          <div
-            className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-black text-white mb-4"
-            style={{ background: 'linear-gradient(135deg, #064E3B, #10B981)' }}
-          >
-            {initials || <User className="w-8 h-8" />}
+          <div className="mb-4">
+            <AvatarUpload userId={session.user.id} initialUrl={avatarUrl} initials={initials || '?'} />
           </div>
           <h1 className="text-2xl font-black text-white">{name || 'Mon compte'}</h1>
           <p className="text-eq-muted text-sm mt-1">{email}</p>
