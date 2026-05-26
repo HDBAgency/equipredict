@@ -6,7 +6,7 @@
   --font-mono: var(--font-geist-mono);
 
   /* Backgrounds */
-  --color-eq-bg:           #08080F;
+  --color-eq-bg:           #000000;
   --color-eq-surface:      #0F0F1A;
   --color-eq-card:         #12121E;
   --color-eq-card-hover:   #161628;
@@ -37,7 +37,7 @@
 }
 
 :root {
-  --background: #08080F;
+  --background: #000000;
   --foreground: #F0F0F8;
 }
 

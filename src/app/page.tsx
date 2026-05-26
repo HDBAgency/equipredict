@@ -62,10 +62,6 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden -mt-16" style={{ minHeight: '1080px', width: '100%' }}>
-        <div className="absolute inset-0 pointer-events-none">
-          <img src="/photo/haut1.jpg" alt="" style={{ width: '1920px', height: '1080px', maxWidth: 'none', position: 'absolute', top: '-80px', left: '50%', transform: 'translateX(-50%)' }} />
-          <div className="absolute inset-0 bg-black/60" />
-        </div>
         <div className="relative flex items-center justify-center" style={{ minHeight: '1080px', paddingBottom: '80px' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <HeroTitle />
