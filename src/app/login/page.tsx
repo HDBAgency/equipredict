@@ -45,7 +45,7 @@ export default function LoginPage() {
       </div>
 
       <div className="fixed top-20 left-0 right-0 text-center text-xs text-white bg-red-900 p-2 z-50">
-        URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'UNDEFINED'}
+        URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'UNDEFINED'} | KEY_LEN: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length ?? 'UNDEFINED'}
       </div>
       <div className="relative w-full max-w-md mx-auto -mt-16">
 
