@@ -9,9 +9,9 @@ export const metadata: Metadata = {
   description: "L'intelligence artificielle au service des courses hippiques. Analysez, prédisez, optimisez.",
   keywords: ['courses hippiques', 'prédictions', 'IA', 'PMU', 'trot', 'galop', 'obstacle'],
   icons: {
-    icon: '/icon.jpg',
-    shortcut: '/icon.jpg',
-    apple: '/icon.jpg',
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
   },
   openGraph: {
     title: 'EquiPredict',
