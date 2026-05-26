@@ -44,6 +44,9 @@ export default function LoginPage() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-eq-green/8 blur-3xl" />
       </div>
 
+      <div className="fixed top-20 left-0 right-0 text-center text-xs text-white bg-red-900 p-2 z-50">
+        URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'UNDEFINED'}
+      </div>
       <div className="relative w-full max-w-md mx-auto -mt-16">
 
         <div className="bg-eq-card border border-eq-border rounded-2xl p-8">
