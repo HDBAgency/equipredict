@@ -36,7 +36,12 @@ export default async function DashboardPage({
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-black text-eq-text mb-1">COURSES DU JOUR</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl sm:text-3xl font-black text-eq-text">COURSES DU JOUR</h1>
+            <span className="px-3 py-1 rounded-full text-xs font-bold text-white border border-white/20">
+              GRATUIT
+            </span>
+          </div>
           <div className="flex items-center gap-3 text-sm text-eq-muted flex-wrap">
             <span className="flex items-center gap-1.5 text-white">
               <CalendarDays className="w-4 h-4" />
