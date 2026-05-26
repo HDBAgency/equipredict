@@ -7,8 +7,7 @@ import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
-  console.log('[DEBUG] SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-  const [email, setEmail] = useState('')
+const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -44,9 +43,6 @@ export default function LoginPage() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-eq-green/8 blur-3xl" />
       </div>
 
-      <div className="fixed top-20 left-0 right-0 text-center text-xs text-white bg-red-900 p-2 z-50">
-        URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'UNDEFINED'} | KEY_LEN: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length ?? 'UNDEFINED'}
-      </div>
       <div className="relative w-full max-w-md mx-auto -mt-16">
 
         <div className="bg-eq-card border border-eq-border rounded-2xl p-8">
