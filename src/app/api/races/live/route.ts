@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { MOCK_RACES, MOCK_HORSES } from '@/lib/mock-data'
 import type { RaceType, TrackCondition, RaceStatus, WeatherCondition } from '@/types'
 import type { LiveHorse, LiveRace, LiveResponse } from '@/types/live'
+import { fetchWeather } from '@/lib/weather'
 
 // ─── PMU API base ─────────────────────────────────────────────────────────────
 
@@ -376,6 +377,19 @@ export async function GET(): Promise<NextResponse<LiveResponse>> {
   let races = await fetchPMURaces(now)
   const source: 'pmu' | 'mock' = races ? 'pmu' : 'mock'
   if (!races) races = buildMockLiveRaces()
+
+  // Enrichit avec la météo réelle Open-Meteo (parallèle, dédupliqué par hippodrome)
+  const uniqueCourses = [...new Set(races.map(r => r.racecourse))]
+  const weatherMap = new Map<string, Awaited<ReturnType<typeof fetchWeather>>>()
+  await Promise.all(uniqueCourses.map(async c => {
+    const w = await fetchWeather(c)
+    if (w) weatherMap.set(c, w)
+  }))
+  races = races.map(r => {
+    const w = weatherMap.get(r.racecourse)
+    if (!w) return r
+    return { ...r, weather: w.condition, temperature: w.temperature }
+  })
 
   races.sort((a, b) => a.startTime.localeCompare(b.startTime))
 
