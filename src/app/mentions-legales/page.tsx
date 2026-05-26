@@ -7,7 +7,7 @@ export default function MentionsLegalesPage() {
         <h2 className="text-lg font-bold text-eq-green mb-3">1. Éditeur du site</h2>
         <p className="text-white/80 leading-relaxed">
           Le site EquiPredict est édité par un particulier.<br />
-          Email de contact : <a href="mailto:humbert-hugo@sfr.fr" className="text-eq-green hover:underline">humbert-hugo@sfr.fr</a>
+          Email de contact : <a href="mailto:hmbt.hugo@gmail.com" className="text-eq-green hover:underline">hmbt.hugo@gmail.com</a>
         </p>
       </section>
 
@@ -35,7 +35,7 @@ export default function MentionsLegalesPage() {
           Les données collectées (adresse email, prénom) sont utilisées uniquement dans le cadre
           de la fourniture du service EquiPredict. Elles ne sont ni vendues, ni transmises à des tiers.
           Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression
-          de vos données en contactant : <a href="mailto:humbert-hugo@sfr.fr" className="text-eq-green hover:underline">humbert-hugo@sfr.fr</a>
+          de vos données en contactant : <a href="mailto:hmbt.hugo@gmail.com" className="text-eq-green hover:underline">hmbt.hugo@gmail.com</a>
         </p>
       </section>
 
