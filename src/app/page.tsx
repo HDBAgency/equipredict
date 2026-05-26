@@ -62,8 +62,8 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden -mt-16" style={{ minHeight: '1080px', width: '100%' }}>
-        <div className="relative flex items-center justify-center" style={{ minHeight: '1080px', paddingBottom: '80px' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <div className="relative flex items-start justify-center" style={{ minHeight: '1080px', paddingTop: '120px' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 text-center">
           <HeroTitle />
 
           <p className="text-sm sm:text-base text-white max-w-2xl mx-auto mb-10 animate-fade-up font-bold" style={{ animationDelay: '0.2s' }}>
