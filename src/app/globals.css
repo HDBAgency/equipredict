@@ -209,5 +209,5 @@ body {
 .border-gradient {
   border: 1px solid transparent;
   background: linear-gradient(#12121E, #12121E) padding-box,
-              linear-gradient(135deg, #7C3AED, #3B82F6) border-box;
+              linear-gradient(135deg, #064E3B, #10B981, #34D399) border-box;
 }
