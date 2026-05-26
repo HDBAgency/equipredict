@@ -144,7 +144,6 @@ function parseParticipant(p: any, raceId: string, idx: number): LiveHorse {
   const refOdds: number    = typeof drRef?.rapport === 'number' && drRef.rapport > 0 ? drRef.rapport : directOdds
   const odds = directOdds
 
-  // Évolution de cote : comparaison direct vs référence (plus fiable que le flag PMU)
   const oddsChange: 'up' | 'down' | 'stable' =
     directOdds < refOdds * 0.93 ? 'down' :
     directOdds > refOdds * 1.07 ? 'up' : 'stable'
@@ -153,11 +152,24 @@ function parseParticipant(p: any, raceId: string, idx: number): LiveHorse {
   const jockeyRaw: string = p.driver ?? p.jockey ?? p.nomDriver ?? p.nomJockey ?? '—'
 
   // Données carrière
-  const careerWins  = Number(p.nombreVictoires ?? 0)
-  const careerRaces = Number(p.nombreCourses ?? 0) || Math.max(careerWins * 5, 1)
-  const winRate     = (careerWins / careerRaces) * 100
+  const careerWins   = Number(p.nombreVictoires ?? 0)
+  const careerPlaces = Number(p.nombrePlaces ?? 0)
+  const careerRaces  = Number(p.nombreCourses ?? 0) || Math.max(careerWins * 5, 1)
+  const winRate      = (careerWins / careerRaces) * 100
+  const placeRate    = ((careerWins + careerPlaces) / careerRaces) * 100
 
-  // Forme depuis la musique
+  // Gains carrière (proxy de classe)
+  const careerEarnings: number =
+    Number(p.gainsParticipant?.gainsCarriere ?? p.gainsCarriere ?? 0)
+
+  // Âge et entraîneur
+  const age: number = Number(p.age ?? 0)
+  const trainer: string = toTitle(p.entraineur?.nom ?? p.nomEntraineur ?? '')
+
+  // Poids/handicap (en grammes ou kg selon PMU)
+  const weight: number = Number(p.poidsConditionMonte ?? p.handicapPoids ?? p.poids ?? 0)
+
+  // Forme depuis la musique (avec boost récence)
   const formScore = parseMusiqueScore(p.musique)
 
   return {
@@ -166,17 +178,26 @@ function parseParticipant(p: any, raceId: string, idx: number): LiveHorse {
     number: Number(p.numPmu ?? idx + 1),
     jockey: toTitle(jockeyRaw),
     odds,
-    previousOdds: refOdds, // cote de référence comme "previous"
+    previousOdds: refOdds,
     oddsChange,
     isFavorite,
-    aiScore: 50,        // recalculé dans buildLiveRace après tout le champ
-    winProbability: 0,  // idem
+    aiScore: 50,
+    winProbability: 0,
     confidenceLevel: 'moyen' as const,
     isRecommended: false,
     _formScore: formScore,
     _winRate: winRate,
+    _placeRate: placeRate,
     _careerRaces: careerRaces,
-  } as LiveHorse & { _formScore: number; _winRate: number; _careerRaces: number }
+    _careerEarnings: careerEarnings,
+    _age: age,
+    _trainer: trainer,
+    _weight: weight,
+  } as LiveHorse & {
+    _formScore: number; _winRate: number; _placeRate: number
+    _careerRaces: number; _careerEarnings: number
+    _age: number; _trainer: string; _weight: number
+  }
 }
 
 // ─── Build LiveRace from PMU course + participants ─────────────────────────────
@@ -219,7 +240,11 @@ function buildLiveRace(
   const racecourse = toTitle(hippoRaw.replace(/^HIPPODROME DE /i, ''))
 
   // Parse horses (with temp scoring fields)
-  type RichHorse = LiveHorse & { _formScore: number; _winRate: number; _careerRaces: number }
+  type RichHorse = LiveHorse & {
+    _formScore: number; _winRate: number; _placeRate: number
+    _careerRaces: number; _careerEarnings: number
+    _age: number; _trainer: string; _weight: number
+  }
   const horses = participants.map((p, i) => parseParticipant(p, raceId, i)) as RichHorse[]
 
   // ── Probabilités odds (inverse-odds softmax) ─────────────────────────────────
@@ -235,21 +260,47 @@ function buildLiveRace(
   }
 
   // ── Score IA composite ────────────────────────────────────────────────────────
-  // Facteurs : forme (musique) 35% + signal marché 30% + consistance carrière 20% + mvt cote 15%
+  // ── Scoring IA 7 facteurs ────────────────────────────────────────────────────
   const oddsValues = horses.filter(h => h.odds < 90).map(h => h.odds)
   const minOdds = Math.min(...(oddsValues.length ? oddsValues : [1]))
   const maxOdds = Math.max(...(oddsValues.length ? oddsValues : [100]))
   const oddsRange = Math.max(maxOdds - minOdds, 1)
 
-  horses.forEach(h => {
-    const form     = h._formScore                                                    // 0-10
-    const oddsRank = h.odds < 90 ? (1 - (h.odds - minOdds) / oddsRange) * 10 : 5  // 5 si pas de cote
-    const mvt      = h.oddsChange === 'down' ? 9 : h.oddsChange === 'stable' ? 5 : 2
-    const consist  = h._careerRaces >= 3
-      ? Math.min(10, (h._winRate / 10))                                             // 0-10
-      : 5
+  // Normalise les gains carrière sur le champ (0-10)
+  const maxEarnings = Math.max(...horses.map(h => h._careerEarnings), 1)
 
-    const raw = form * 0.35 + oddsRank * 0.30 + consist * 0.20 + mvt * 0.15
+  horses.forEach(h => {
+    // 1. Forme (musique) — 0-10
+    const form = h._formScore
+
+    // 2. Signal marché (rang par cotes) — 0-10
+    const oddsRank = h.odds < 90 ? (1 - (h.odds - minOdds) / oddsRange) * 10 : 5
+
+    // 3. Consistance victoires — 0-10
+    const consist = h._careerRaces >= 3 ? Math.min(10, h._winRate / 10) : 5
+
+    // 4. Taux placement (victoires + places) — 0-10
+    const placement = h._careerRaces >= 3 ? Math.min(10, h._placeRate / 10) : 5
+
+    // 5. Mouvement de cote (gradient) — 0-10
+    const ratio = h.odds > 0 ? (h.previousOdds - h.odds) / h.previousOdds : 0
+    const mvt = Math.max(0, Math.min(10, 5 + ratio * 25))
+
+    // 6. Âge optimal par discipline — 0-10
+    let age = 5
+    if (h._age > 0) {
+      if (raceType === 'plat')        age = h._age >= 3 && h._age <= 6 ? 9 : h._age <= 8 ? 6 : 3
+      else if (raceType === 'trot')   age = h._age >= 4 && h._age <= 7 ? 9 : h._age <= 9 ? 6 : 3
+      else /* obstacle/steeplechase */age = h._age >= 5 && h._age <= 9 ? 9 : h._age <= 11 ? 6 : 3
+    }
+
+    // 7. Classe du cheval (gains carrière normalisés) — 0-10
+    const earnings = maxEarnings > 0 ? Math.min(10, (h._careerEarnings / maxEarnings) * 10) : 5
+
+    // Pondération finale
+    const raw = form * 0.28 + oddsRank * 0.25 + consist * 0.12 + placement * 0.10
+              + mvt * 0.10 + age * 0.08 + earnings * 0.07
+
     h.aiScore = Math.round(Math.min(100, Math.max(0, raw * 10)))
     h.confidenceLevel = h.aiScore >= 70 ? 'fort' : h.aiScore >= 50 ? 'moyen' : 'faible'
   })
