@@ -22,7 +22,7 @@ export default function LogoutButton() {
     const { createClient } = await import('@/lib/supabase/client')
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/')
+    window.location.href = '/'
   }
 
   if (loggedIn === null) return null
