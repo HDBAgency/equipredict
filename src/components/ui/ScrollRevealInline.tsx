@@ -24,7 +24,7 @@ export default function ScrollRevealInline({ text1, text2, className = '' }: Pro
   return (
     <h2
       ref={ref}
-      className={`text-5xl sm:text-7xl font-black uppercase flex justify-center flex-nowrap whitespace-nowrap gap-x-4 ${className}`}
+      className={`text-3xl sm:text-5xl lg:text-7xl font-black uppercase flex justify-center flex-wrap gap-x-4 ${className}`}
       style={{ opacity: 0, animation: visible ? 'hero-reveal 0.9s cubic-bezier(.22,1,.36,1) 0s forwards' : 'none' }}
     >
       <span className="text-white">{text1}</span>
