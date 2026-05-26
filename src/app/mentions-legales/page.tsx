@@ -6,7 +6,7 @@ export default function MentionsLegalesPage() {
       <section className="mb-8">
         <h2 className="text-lg font-bold text-eq-green mb-3">1. Éditeur du site</h2>
         <p className="text-white/80 leading-relaxed">
-          Le site EquiPredict est édité par un particulier.<br />
+          Le site EquiPredict est édité par <strong>HDB Agency</strong>.<br />
           Email de contact : <a href="mailto:hmbt.hugo@gmail.com" className="text-eq-green hover:underline">hmbt.hugo@gmail.com</a>
         </p>
       </section>
