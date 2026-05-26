@@ -163,7 +163,7 @@ export default function HomePage() {
       </section>
 
       {/* Vidéos TikTok — carousel 3D */}
-      <section className="pt-40 sm:pt-24 lg:pt-60 pb-20">
+      <section className="pt-32 sm:pt-24 lg:pt-60 pb-20">
         <div className="text-center mb-10 sm:mb-16 px-4">
           <ScrollRevealHeading line1="LES COURSES" line2="EN VIDÉO" />
         </div>
