@@ -270,7 +270,10 @@ export default function HomePage() {
         </section>
       </div>
 
-      <p className="text-center text-xs font-bold text-white py-6">©2026 - EquiPrédict, Tout droit réservé.</p>
+      <p className="text-center text-xs font-bold text-white py-6">
+        ©2026 - EquiPrédict, Tout droit réservé.{' '}
+        <Link href="/mentions-legales" className="underline hover:text-eq-green transition-colors">Mentions Légales</Link>
+      </p>
 
     </div>
     </>
