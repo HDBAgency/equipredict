@@ -37,13 +37,13 @@ const HOW_STEPS = [
   },
 ]
 
+const BASE = 'https://mkzkkwqxarnnoamxnzyu.supabase.co/storage/v1/object/public/videos'
 const VIDEOS = [
-  '/videos/video1.mp4',
-  '/videos/video2.mp4',
-  '/videos/video3.mp4',
-  '/videos/video4.mp4',
-  '/videos/video5.mp4',
-  '/videos/video6.mp4',
+  `${BASE}/ssstik.io_@francegalop_1779699846455.mp4`,
+  `${BASE}/ssstik.io_@francegalop_1779699889192.mp4`,
+  `${BASE}/ssstik.io_@francegalop_1779699915277.mp4`,
+  `${BASE}/ssstik.io_@elliotfcx_1779699998794.mp4`,
+  `${BASE}/ssstik.io_@equidia_off_1779700044750.mp4`,
 ]
 
 const TESTIMONIALS = [
