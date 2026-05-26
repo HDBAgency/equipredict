@@ -51,6 +51,9 @@ const TESTIMONIALS = [
   { name: 'Thomas R.', avatar: 'https://randomuser.me/api/portraits/men/32.jpg', role: 'Abonné Premium', text: "Je suis les prédictions depuis 3 mois. Le niveau de confiance FORT est vraiment fiable — 73% de succès de mon côté. Je ne mise plus sans consulter EquiPredict avant chaque course.", stars: 5 },
   { name: 'Marie-Claire D.', avatar: 'https://randomuser.me/api/portraits/women/44.jpg', role: 'Abonnée Pro', text: "Les analyses de terrain sont bluffantes. Surtout sur l'obstacle sous la pluie — EquiPredict identifie les spécialistes parfaitement. Un outil indispensable pour les passionnés.", stars: 5 },
   { name: 'Julien B.', avatar: 'https://randomuser.me/api/portraits/men/67.jpg', role: 'Abonné Premium', text: "Interface propre, prédictions pertinentes, justification claire. Enfin une vraie IA pour le PMU ! J'ai gagné en régularité depuis que j'utilise l'application chaque semaine.", stars: 4 },
+  { name: 'Sophie M.', avatar: 'https://randomuser.me/api/portraits/women/68.jpg', role: 'Abonnée Pro', text: "Les statistiques avancées du plan Pro sont une mine d'or. Je compare les entraîneurs, les hippodromes, les conditions de terrain — tout y est. Mon taux de réussite a bondi de 20% en 6 semaines.", stars: 5 },
+  { name: 'Rémi V.', avatar: 'https://randomuser.me/api/portraits/men/12.jpg', role: 'Abonné Premium', text: "J'étais sceptique au départ mais les résultats parlent d'eux-mêmes. Sur les courses de trot à Vincennes, EquiPredict m'a sorti des gagnants que je n'aurais jamais joués seul.", stars: 5 },
+  { name: 'Isabelle F.', avatar: 'https://randomuser.me/api/portraits/women/21.jpg', role: 'Abonnée Premium', text: "Simple, rapide, efficace. En 2 minutes j'ai mon top 3 pour la journée avec les explications. Je recommande à tous mes amis passionnés de courses.", stars: 4 },
 ]
 
 export default function HomePage() {
