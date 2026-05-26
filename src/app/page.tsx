@@ -62,7 +62,7 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden -mt-16" style={{ minHeight: '1080px', width: '100%' }}>
-        <div className="relative flex items-start justify-center" style={{ minHeight: '1080px', paddingTop: '190px' }}>
+        <div className="relative flex items-start justify-center" style={{ minHeight: '1080px', paddingTop: '180px' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 text-center">
           <HeroTitle />
 
