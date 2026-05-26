@@ -193,7 +193,7 @@ export default function HomePage() {
       <div className="relative">
 
         {/* FAQ */}
-        <section className="pt-24 pb-48 relative" style={{ zIndex: 2 }}>
+        <section className="pb-48 relative" style={{ zIndex: 2, paddingTop: '34px' }}>
           <div className="mx-auto px-8" style={{ maxWidth: '1000px' }}>
             <div className="text-center mb-16">
               <ScrollRevealInline text1="QUESTIONS" text2="FRÉQUENTES" />
