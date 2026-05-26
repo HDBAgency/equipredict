@@ -168,10 +168,9 @@ export function LiveRacesGrid() {
 
   const FREE_LIMIT = 3
   const isFree = plan === 'free'
-  const freeRaces = filtered.slice(0, FREE_LIMIT)
   const upcomingAll = filtered.filter(r => !isPast(r))
-  const upcoming = isFree ? freeRaces.filter(r => !isPast(r)) : upcomingAll
-  const past     = isFree ? freeRaces.filter(r => isPast(r)).reverse() : filtered.filter(r => isPast(r)).reverse()
+  const upcoming = isFree ? upcomingAll.slice(0, FREE_LIMIT) : upcomingAll
+  const past     = isFree ? [] : filtered.filter(r => isPast(r)).reverse()
 
   const totalRunners = allRaces.reduce((s, r) => s + r.numberOfRunners, 0)
 
