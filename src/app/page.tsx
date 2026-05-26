@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { ArrowRight, TrendingUp, BarChart3, Zap, Shield, Target, Users, Star } from 'lucide-react'
+import { ArrowRight, TrendingUp, BarChart3, Zap, Shield, Target, Users } from 'lucide-react'
 import ScrollRevealTitle from '@/components/ui/ScrollRevealTitle'
 import HeroTitle from '@/components/ui/HeroTitle'
 import ScrollRevealHeading from '@/components/ui/ScrollRevealHeading'
@@ -8,6 +8,7 @@ import ScrollRevealInline from '@/components/ui/ScrollRevealInline'
 import VideoCarousel from '@/components/ui/VideoCarousel'
 import SmartCTAButton from '@/components/ui/SmartCTAButton'
 import LogoutButton from '@/components/ui/LogoutButton'
+import FloatingTestimonials from '@/components/ui/FloatingTestimonials'
 
 const STATS = [
   { value: '87.4%', label: 'Précision moyenne', icon: Target },
@@ -47,14 +48,6 @@ const VIDEOS = [
   `${BASE}/ssstik.io_@equidia_off_1779788461478.mp4`,
 ]
 
-const TESTIMONIALS = [
-  { name: 'Thomas R.', avatar: 'https://randomuser.me/api/portraits/men/32.jpg', role: 'Abonné Premium', text: "Je suis les prédictions depuis 3 mois. Le niveau de confiance FORT est vraiment fiable — 73% de succès de mon côté. Je ne mise plus sans consulter EquiPredict avant chaque course.", stars: 5 },
-  { name: 'Marie-Claire D.', avatar: 'https://randomuser.me/api/portraits/women/44.jpg', role: 'Abonnée Pro', text: "Les analyses de terrain sont bluffantes. Surtout sur l'obstacle sous la pluie — EquiPredict identifie les spécialistes parfaitement. Un outil indispensable pour les passionnés.", stars: 5 },
-  { name: 'Julien B.', avatar: 'https://randomuser.me/api/portraits/men/67.jpg', role: 'Abonné Premium', text: "Interface propre, prédictions pertinentes, justification claire. Enfin une vraie IA pour le PMU ! J'ai gagné en régularité depuis que j'utilise l'application chaque semaine.", stars: 4 },
-  { name: 'Sophie M.', avatar: 'https://randomuser.me/api/portraits/women/68.jpg', role: 'Abonnée Pro', text: "Les statistiques avancées du plan Pro sont une mine d'or. Je compare les entraîneurs, les hippodromes, les conditions de terrain — tout y est. Mon taux de réussite a bondi de 20% en 6 semaines.", stars: 5 },
-  { name: 'Rémi V.', avatar: 'https://randomuser.me/api/portraits/men/12.jpg', role: 'Abonné Premium', text: "J'étais sceptique au départ mais les résultats parlent d'eux-mêmes. Sur les courses de trot à Vincennes, EquiPredict m'a sorti des gagnants que je n'aurais jamais joués seul.", stars: 5 },
-  { name: 'Isabelle F.', avatar: 'https://randomuser.me/api/portraits/women/21.jpg', role: 'Abonnée Premium', text: "Simple, rapide, efficace. En 2 minutes j'ai mon top 3 pour la journée avec les explications. Je recommande à tous mes amis passionnés de courses.", stars: 4 },
-]
 
 export default function HomePage() {
   return (
@@ -190,28 +183,8 @@ export default function HomePage() {
       <section className="pt-40 pb-24 relative z-10">
         <div className="px-8">
           <ScrollRevealHeading line1={"Ce qu'en disent"} line2="nos utilisateurs" />
-          <div className="grid grid-cols-1 md:grid-cols-3 max-w-7xl mx-auto mt-20" style={{ gap: '25px' }}>
-            {TESTIMONIALS.map(({ name, avatar, role, text, stars }) => (
-              <div key={name} className="bg-black/50 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
-                <div className="flex items-center gap-1 mb-5">
-                  {Array.from({ length: stars }).map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-eq-amber fill-eq-amber" />
-                  ))}
-                </div>
-                <p className="text-white text-base leading-relaxed mb-6" style={{ minHeight: '72px' }}>&ldquo;{text}&rdquo;</p>
-                <div className="flex items-center gap-3">
-                  <img
-                    src={avatar}
-                    alt={name}
-                    className="w-11 h-11 rounded-full object-cover flex-shrink-0 border-2 border-white/20"
-                  />
-                  <div>
-                    <div className="font-semibold text-sm text-white">{name}</div>
-                    <div className="text-xs text-eq-green">{role}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="mt-20">
+            <FloatingTestimonials />
           </div>
         </div>
       </section>
