@@ -10,8 +10,13 @@ export default function SmartCTAButton() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setHref('/dashboard-gratuit')
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return
+      const { data: profile } = await supabase.from('profiles').select('plan').eq('id', data.session.user.id).single()
+      const plan = profile?.plan ?? 'free'
+      if (plan === 'pro') setHref('/dashboard-pro')
+      else if (plan === 'premium') setHref('/dashboard-premium')
+      else setHref('/dashboard-gratuit')
     })
   }, [])
 
