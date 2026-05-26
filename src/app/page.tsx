@@ -259,12 +259,6 @@ export default function HomePage() {
               >
                 COMMENCER MAINTENANT <ArrowRight className="w-5 h-5" />
               </Link>
-              <Link
-                href="/login"
-                className="btn-connexion text-white font-black text-base tracking-tight px-8 py-4 border border-white/20 rounded-xl"
-              >
-                <span className="btn-connexion-text">CONNEXION</span>
-              </Link>
             </div>
           </div>
         </section>
