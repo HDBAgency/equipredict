@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { User, CreditCard, LogOut } from 'lucide-react'
+import { User, CreditCard, LogOut, FileText } from 'lucide-react'
 import LogoutButton from '@/components/ui/LogoutButton'
 import AvatarUpload from '@/components/ui/AvatarUpload'
 
@@ -82,6 +83,34 @@ export default async function ComptePage() {
             Passer Premium
           </a>
         )}
+
+        {/* Mentions légales */}
+        <div className="mt-6 bg-eq-card border border-eq-border rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl bg-eq-surface border border-eq-border flex items-center justify-center shrink-0">
+              <FileText className="w-4 h-4 text-eq-muted" />
+            </div>
+            <h2 className="text-sm font-bold text-white">Mentions légales</h2>
+          </div>
+          <ul className="space-y-2 text-sm text-white/70">
+            <li><span className="font-semibold text-white">Éditeur :</span> HDB Agency</li>
+            <li><span className="font-semibold text-white">Contact :</span>{' '}
+              <a href="mailto:hmbt.hugo@gmail.com" className="text-eq-green hover:underline">hmbt.hugo@gmail.com</a>
+            </li>
+            <li><span className="font-semibold text-white">Hébergement :</span> Vercel Inc., États-Unis</li>
+            <li className="pt-1 text-xs text-white/50 leading-relaxed">
+              Les prédictions EquiPredict sont à titre informatif uniquement et ne constituent pas des conseils de paris.
+              Jeu responsable — 18+
+            </li>
+          </ul>
+          <Link
+            href="/mentions-legales"
+            className="inline-flex items-center gap-1.5 mt-4 text-xs text-eq-green hover:text-eq-green-light transition-colors font-semibold"
+          >
+            Lire les mentions complètes →
+          </Link>
+        </div>
+
       </div>
     </>
   )
