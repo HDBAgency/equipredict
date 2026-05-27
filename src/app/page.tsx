@@ -102,7 +102,7 @@ export default function HomePage() {
           className="relative flex items-start justify-center min-h-[500px] sm:min-h-[700px] lg:min-h-[1080px]"
           style={{ paddingTop: 'clamp(160px, 23vh, 250px)', zIndex: 3 }}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 text-center w-full">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 text-center w-full flex flex-col items-center sm:block">
             <HeroTitle />
 
             <p className="text-sm sm:text-base text-white max-w-2xl mx-auto mb-6 sm:mb-10 animate-fade-up font-bold px-2 sm:px-0" style={{ animationDelay: '0.2s' }}>
