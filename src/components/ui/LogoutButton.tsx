@@ -36,7 +36,7 @@ export default function LogoutButton() {
     return (
       <Link
         href="/login"
-        className="px-4 py-2 rounded-xl text-sm font-black text-white border border-white/20 hover:bg-white/10 transition-all"
+        className="px-4 py-2 rounded-xl text-sm font-black text-white border border-white/20 hover:bg-eq-green hover:border-eq-green transition-all"
       >
         CONNEXION
       </Link>
