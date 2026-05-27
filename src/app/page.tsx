@@ -233,13 +233,7 @@ export default function HomePage() {
               Accédez aux analyses IA, statistiques avancées et prédictions de course dès maintenant.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/pricing"
-                className="flex items-center gap-2 text-white font-bold px-8 py-4 rounded-xl text-base transition-all hover:-translate-y-0.5 hover:shadow-2xl w-full sm:w-auto justify-center"
-                style={{ background: 'linear-gradient(135deg, #064E3B, #10B981, #34D399, #6EE7B7)' }}
-              >
-                COMMENCER MAINTENANT <ArrowRight className="w-5 h-5" />
-              </Link>
+              <SmartCTAButton label="COMMENCER MAINTENANT" />
             </div>
           </div>
         </section>
