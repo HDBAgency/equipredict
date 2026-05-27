@@ -79,8 +79,7 @@ export default async function ComptePage() {
             {plan === 'free' && (
               <a
                 href="/pricing"
-                className="flex-1 flex items-center justify-center py-3.5 rounded-xl font-bold text-white text-sm transition-all hover:shadow-lg hover:shadow-eq-green/25"
-                style={{ background: 'linear-gradient(135deg, #064E3B, #10B981)' }}
+                className="flex-1 flex items-center justify-center py-3.5 rounded-xl font-bold text-white text-sm transition-all border border-eq-green hover:bg-eq-green/10"
               >
                 Passer Premium
               </a>
