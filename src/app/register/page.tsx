@@ -59,8 +59,7 @@ function RegisterForm() {
       })
       if (signUpError) throw signUpError
       setSuccess(true)
-      const redirect = plan === 'premium' || plan === 'pro' ? '/dashboard-premium' : '/dashboard-gratuit'
-      setTimeout(() => router.push(redirect), 1500)
+      setTimeout(() => router.push('/pricing'), 1500)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur lors de l'inscription")
     } finally {
@@ -79,7 +78,7 @@ function RegisterForm() {
           <p className="text-eq-muted text-sm mb-2">
             Plan <span className="text-eq-green font-semibold">{PLAN_LABELS[plan] ?? plan}</span> activé.
           </p>
-          <p className="text-eq-muted text-xs mb-6">Redirection vers le tableau de bord…</p>
+          <p className="text-eq-muted text-xs mb-6">Redirection vers les tarifs…</p>
           <div className="w-5 h-5 rounded-full border-2 border-eq-green border-t-transparent animate-spin mx-auto" />
         </div>
       </div>
