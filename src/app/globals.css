@@ -44,6 +44,23 @@
 html, body {
   overflow-x: hidden;
   max-width: 100vw;
+  /* Blocage sélection de texte */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Blocage drag & drop sur médias */
+img, video {
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+
+/* Autoriser pointer-events sur les liens et boutons */
+a, button, input, textarea, select, label {
+  pointer-events: auto;
 }
 
 body {

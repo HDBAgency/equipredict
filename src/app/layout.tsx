@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import { Navbar } from '@/components/layout/Navbar'
+import SiteProtection from '@/components/ui/SiteProtection'
 
 export const metadata: Metadata = {
   title: 'EquiPredict — Prédictions hippiques IA',
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className={`${GeistSans.variable} ${GeistMono.variable} h-full`}>
       <body className="min-h-full flex flex-col text-eq-text antialiased bg-eq-bg overflow-x-hidden">
+        <SiteProtection />
         <Navbar />
         <main className="flex-1 pt-16 w-full overflow-x-hidden">{children}</main>
       </body>
