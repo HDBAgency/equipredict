@@ -28,15 +28,17 @@ function isPast(race: LiveRace): boolean {
 function NextDayCountdown() {
   const [timeLeft, setTimeLeft] = useState('')
   const [firstRaceTime, setFirstRaceTime] = useState<Date | null>(null)
-  const [raceTimeStr, setRaceTimeStr] = useState('')
+  const [raceTimes, setRaceTimes] = useState<string[]>([])
 
   useEffect(() => {
     fetch('/api/races/next-morning')
       .then(r => r.json())
       .then(d => {
-        const t = new Date(d.firstRaceTime)
-        setFirstRaceTime(t)
-        setRaceTimeStr(t.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' }))
+        setFirstRaceTime(new Date(d.firstRaceTime))
+        const times: string[] = (d.races ?? [d.firstRaceTime]).map((iso: string) =>
+          new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' })
+        )
+        setRaceTimes(times)
       })
   }, [])
 
@@ -56,18 +58,26 @@ function NextDayCountdown() {
   }, [firstRaceTime])
 
   return (
-    <div className="text-center py-16">
+    <div className="text-center py-16 max-w-sm mx-auto">
       <div className="w-14 h-14 rounded-2xl bg-eq-green/10 border border-eq-green/20 flex items-center justify-center mx-auto mb-6">
         <Timer className="w-7 h-7 text-eq-green" />
       </div>
-      <p className="text-white text-sm mb-3">
-        Prochaines courses demain{raceTimeStr ? <> à <span className="font-bold">{raceTimeStr}</span></> : ''}
-      </p>
-      <div className="text-5xl font-black text-white tracking-widest font-mono mb-4">
+      <p className="text-eq-muted text-sm mb-2">Les 3 premières courses reprennent demain</p>
+      <div className="text-5xl font-black text-white tracking-widest font-mono mb-5">
         {timeLeft || '...'}
       </div>
-      <p className="text-white text-xs">Passez Premium pour accéder à toutes les courses sans limite.</p>
-      <a href="/pricing" className="inline-block mt-5 px-6 py-2.5 rounded-xl font-bold text-sm text-white transition-all hover:shadow-lg" style={{ background: 'linear-gradient(135deg, #064E3B, #10B981)' }}>
+      {raceTimes.length > 0 && (
+        <div className="flex items-center justify-center gap-3 mb-6">
+          {raceTimes.map((t, i) => (
+            <div key={i} className="flex flex-col items-center bg-eq-card border border-eq-border rounded-xl px-4 py-2.5">
+              <span className="text-[10px] text-eq-muted mb-1">Course {i + 1}</span>
+              <span className="text-sm font-black text-white">{t}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="text-white text-xs mb-5">Passez Premium pour accéder à toutes les courses sans limite.</p>
+      <a href="/pricing" className="inline-block px-6 py-2.5 rounded-xl font-bold text-sm text-white transition-all hover:shadow-lg" style={{ background: 'linear-gradient(135deg, #064E3B, #10B981)' }}>
         Voir les offres
       </a>
     </div>
@@ -154,9 +164,19 @@ export function LiveRacesGrid({ plan = 'free' }: { plan?: string }) {
 
   const FREE_LIMIT = 3
   const isFree = plan === 'free'
+
+  // Pour le plan gratuit : les 3 premières courses DU JOUR (par heure de départ)
+  // qu'elles soient passées ou non — l'utilisateur n'a droit qu'à ces 3 là
+  const sortedByTime = [...filtered].sort(
+    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  )
+  const freeRacesOfDay = isFree ? sortedByTime.slice(0, FREE_LIMIT) : sortedByTime
+
+  const upcoming = freeRacesOfDay.filter(r => !isPast(r))
+  const past     = isFree ? [] : freeRacesOfDay.filter(r => isPast(r)).reverse()
+
+  // Pour le bandeau "courses masquées" : toutes les courses à venir hors les 3 premières
   const upcomingAll = filtered.filter(r => !isPast(r))
-  const upcoming = isFree ? upcomingAll.slice(0, FREE_LIMIT) : upcomingAll
-  const past     = isFree ? [] : filtered.filter(r => isPast(r)).reverse()
 
   const totalRunners = allRaces.reduce((s, r) => s + r.numberOfRunners, 0)
 
@@ -260,14 +280,14 @@ export function LiveRacesGrid({ plan = 'free' }: { plan?: string }) {
       )}
 
       {/* Bandeau upgrade plan gratuit */}
-      {isFree && upcomingAll.length > FREE_LIMIT && (
+      {isFree && upcomingAll.length > upcoming.length && (
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-eq-card border border-eq-green/30 rounded-2xl px-6 py-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-eq-green/10 border border-eq-green/30 flex items-center justify-center shrink-0">
               <Lock className="w-5 h-5 text-eq-green" />
             </div>
             <div>
-              <p className="text-eq-text font-bold text-sm">+{upcomingAll.length - FREE_LIMIT} courses masquées</p>
+              <p className="text-eq-text font-bold text-sm">+{upcomingAll.length - upcoming.length} courses masquées</p>
               <p className="text-white text-xs">Passez Premium pour accéder à toutes les courses du jour.</p>
             </div>
           </div>

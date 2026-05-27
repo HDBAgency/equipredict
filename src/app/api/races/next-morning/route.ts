@@ -39,10 +39,13 @@ export async function GET() {
     }
 
     allCourses.sort((a, b) => a.heureDepart - b.heureDepart)
-    const first = allCourses[0]
+    const first3 = allCourses.slice(0, 3)
 
-    if (first) {
-      return NextResponse.json({ firstRaceTime: new Date(first.heureDepart).toISOString() })
+    if (first3.length > 0) {
+      return NextResponse.json({
+        firstRaceTime: new Date(first3[0].heureDepart).toISOString(),
+        races: first3.map(c => new Date(c.heureDepart).toISOString()),
+      })
     }
   } catch {
     // fallback ci-dessous
@@ -51,5 +54,10 @@ export async function GET() {
   // Fallback : 9h00 heure de Paris le lendemain
   const fallback = new Date(tomorrow)
   fallback.setHours(7, 0, 0, 0) // 9h Paris = 7h UTC
-  return NextResponse.json({ firstRaceTime: fallback.toISOString() })
+  const fallback2 = new Date(fallback); fallback2.setMinutes(20)
+  const fallback3 = new Date(fallback); fallback3.setMinutes(40)
+  return NextResponse.json({
+    firstRaceTime: fallback.toISOString(),
+    races: [fallback.toISOString(), fallback2.toISOString(), fallback3.toISOString()],
+  })
 }
