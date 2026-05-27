@@ -180,6 +180,17 @@ export function LiveRacesGrid({ plan = 'free' }: { plan?: string }) {
 
   const totalRunners = allRaces.reduce((s, r) => s + r.numberOfRunners, 0)
 
+  const showCountdown = isFree && data !== null && upcoming.length === 0
+
+  // Affichage centré pleine page quand countdown actif
+  if (showCountdown) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 180px)' }}>
+        <NextDayCountdown />
+      </div>
+    )
+  }
+
   return (
     <div>
       {/* Barre statuts + stats */}
@@ -252,17 +263,15 @@ export function LiveRacesGrid({ plan = 'free' }: { plan?: string }) {
         </div>
       )}
 
-      {/* Aucune course à venir */}
-      {data && upcoming.length === 0 && (
-        isFree ? <NextDayCountdown /> : (
-          <div className="text-center py-16">
-            <div className="w-12 h-12 rounded-2xl bg-eq-green/10 border border-eq-green/20 flex items-center justify-center mx-auto mb-4">
-              <Radio className="w-6 h-6 text-eq-green" />
-            </div>
-            <h3 className="text-lg font-bold text-eq-text mb-2">Aucune course à venir</h3>
-            <p className="text-eq-muted text-sm">Essayez un autre filtre ou revenez demain.</p>
+      {/* Aucune course à venir — plan non gratuit */}
+      {data && upcoming.length === 0 && !isFree && (
+        <div className="text-center py-16">
+          <div className="w-12 h-12 rounded-2xl bg-eq-green/10 border border-eq-green/20 flex items-center justify-center mx-auto mb-4">
+            <Radio className="w-6 h-6 text-eq-green" />
           </div>
-        )
+          <h3 className="text-lg font-bold text-eq-text mb-2">Aucune course à venir</h3>
+          <p className="text-eq-muted text-sm">Essayez un autre filtre ou revenez demain.</p>
+        </div>
       )}
 
       {/* Grille des courses à venir */}
