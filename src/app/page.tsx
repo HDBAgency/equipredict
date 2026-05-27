@@ -80,7 +80,7 @@ export default function HomePage() {
     <div className="fixed top-0 right-0 z-50 p-4">
       <LogoutButton />
     </div>
-    <div className="flex flex-col w-full overflow-x-hidden">
+    <div className="flex flex-col w-full">
 
       {/* Hero — vidéo en fond */}
       <section className="relative overflow-hidden -mt-16 min-h-[500px] sm:min-h-[700px] lg:min-h-[1080px]">
