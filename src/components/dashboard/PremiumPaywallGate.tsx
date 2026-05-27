@@ -54,10 +54,10 @@ export function PremiumPaywallGate({ children }: Props) {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/pricing"
-            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white transition-all hover:shadow-lg hover:shadow-eq-green/25"
+            className="btn-cta-blink flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white transition-all hover:shadow-lg hover:shadow-eq-green/25"
             style={{ background: 'linear-gradient(135deg, #064E3B, #10B981)' }}
           >
-            Voir les offres
+            VOIR LES OFFRES
             <ArrowRight className="w-4 h-4" />
           </Link>
           {plan === null && (

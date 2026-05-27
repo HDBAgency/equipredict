@@ -77,8 +77,8 @@ function NextDayCountdown() {
         </div>
       )}
       <p className="text-white text-xs mb-5">Passez Premium pour accéder à toutes les courses sans limite.</p>
-      <a href="/pricing" className="inline-block px-6 py-2.5 rounded-xl font-bold text-sm text-white transition-all hover:shadow-lg" style={{ background: 'linear-gradient(135deg, #064E3B, #10B981)' }}>
-        Voir les offres
+      <a href="/pricing" className="btn-cta-blink inline-block px-6 py-2.5 rounded-xl font-bold text-sm text-white transition-all hover:shadow-lg" style={{ background: 'linear-gradient(135deg, #064E3B, #10B981)' }}>
+        VOIR LES OFFRES
       </a>
     </div>
   )
@@ -291,8 +291,8 @@ export function LiveRacesGrid({ plan = 'free' }: { plan?: string }) {
               <p className="text-white text-xs">Passez Premium pour accéder à toutes les courses du jour.</p>
             </div>
           </div>
-          <a href="/pricing" className="shrink-0 px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-all hover:shadow-lg" style={{ background: 'linear-gradient(135deg, #064E3B, #10B981)' }}>
-            Voir les offres
+          <a href="/pricing" className="btn-cta-blink shrink-0 px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-all hover:shadow-lg" style={{ background: 'linear-gradient(135deg, #064E3B, #10B981)' }}>
+            VOIR LES OFFRES
           </a>
         </div>
       )}
