@@ -100,7 +100,7 @@ export default function HomePage() {
         <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, black)', zIndex: 2 }} />
         <div
           className="relative flex items-start justify-center min-h-[600px] sm:min-h-[800px] lg:min-h-[1080px]"
-          style={{ paddingTop: 'clamp(200px, 28vh, 300px)', zIndex: 3 }}
+          style={{ paddingTop: 'clamp(140px, 19vh, 200px)', zIndex: 3 }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 text-center w-full">
             <HeroTitle />
