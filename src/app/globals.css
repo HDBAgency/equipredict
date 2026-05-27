@@ -136,6 +136,27 @@ body {
   animation: shimmer-text 2.5s linear infinite;
 }
 
+/* Back button */
+.back-btn {
+  background: transparent;
+}
+.back-btn:hover {
+  background-color: #10B981;
+  border-color: #10B981;
+}
+.back-arrow {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.back-btn:hover .back-arrow {
+  transform: translateX(-2px);
+  color: white;
+}
+
+@keyframes back-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
 .animate-marquee {
   display: flex;
   animation: marquee 20s linear infinite;

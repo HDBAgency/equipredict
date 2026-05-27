@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 const NAV_LINKS: { href: string; label: string }[] = []
@@ -33,8 +34,17 @@ export function Navbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none" style={{ background: 'transparent' }}>
-      {/* Logo — top left */}
-      <div className="absolute top-0 left-0 p-4 pointer-events-auto">
+      {/* Retour + Logo — top left */}
+      <div className="absolute top-0 left-0 p-4 pointer-events-auto flex items-center gap-2">
+        {pathname !== '/' && (
+          <button
+            onClick={() => router.back()}
+            className="back-btn flex items-center justify-center w-9 h-9 rounded-xl border border-white/20 transition-all"
+            aria-label="Retour"
+          >
+            <ArrowLeft className="back-arrow w-4 h-4 text-white transition-all" />
+          </button>
+        )}
         <Link href="/" className="logo-link flex items-center px-4 py-2 rounded-xl border border-white/20 transition-all">
           <span className="text-sm font-black">
             <span className="logo-equi text-white">Equi</span><span className="logo-predict">Predict</span>
