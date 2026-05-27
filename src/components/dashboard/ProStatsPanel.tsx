@@ -69,14 +69,12 @@ export function ProStatsPanel() {
           </div>
           <div className="space-y-2.5">
             {TOP_HIPPODROMES.map(({ name, rate, courses }) => (
-              <div key={name} className="flex items-center gap-3">
-                <span className="text-sm text-white flex-1">{name}</span>
-                <span className="text-xs text-eq-muted">{courses} courses</span>
-                <div className="w-24">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-xs font-bold text-eq-green">{rate}</span>
-                  </div>
-                  <div className="h-1.5 bg-eq-border rounded-full">
+              <div key={name} className="flex items-center gap-2">
+                <span className="text-sm text-white flex-1 min-w-0 truncate">{name}</span>
+                <span className="text-xs text-eq-muted shrink-0 hidden sm:inline">{courses} courses</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-xs font-bold text-eq-green w-9 text-right">{rate}</span>
+                  <div className="w-16 sm:w-24 h-1.5 bg-eq-border rounded-full">
                     <div className="h-full bg-eq-green rounded-full" style={{ width: rate }} />
                   </div>
                 </div>

@@ -34,7 +34,7 @@ export default async function ComptePage() {
       <div className="fixed top-0 right-0 z-50 p-4">
         <LogoutButton />
       </div>
-      <div className="max-w-lg mx-auto px-4 py-16">
+      <div className="max-w-lg mx-auto px-4 py-8 sm:py-16">
 
         {/* Avatar + nom */}
         <div className="flex flex-col items-center mb-10">

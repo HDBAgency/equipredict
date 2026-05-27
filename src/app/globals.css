@@ -235,7 +235,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Scale responsive via font-size */
+  font-size: 16px;
 }
+@media (max-width: 480px)  { .video-carousel-scene { font-size: 7px;  height: 32em; } }
+@media (min-width: 481px) and (max-width: 768px)  { .video-carousel-scene { font-size: 10px; height: 35em; } }
+@media (min-width: 769px) and (max-width: 1024px) { .video-carousel-scene { font-size: 13px; } }
+
 .video-carousel-ring {
   transform-style: preserve-3d;
   animation: carousel-ry 32s linear infinite;

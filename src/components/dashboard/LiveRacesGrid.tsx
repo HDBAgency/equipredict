@@ -197,32 +197,32 @@ export function LiveRacesGrid({ plan = 'free' }: { plan?: string }) {
   return (
     <div>
       {/* Barre statuts + stats */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-eq-green/10 border border-eq-green/25 text-eq-green">
+      <div className="flex items-center justify-between gap-2 mb-6 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-eq-green/10 border border-eq-green/25 text-eq-green shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-eq-green animate-pulse" />
             LIVE
           </div>
           {data ? (
             <>
-              <div className="flex items-center gap-2">
-                <div className="text-center bg-eq-card border border-eq-border rounded-xl px-4 py-2">
-                  <div className="text-lg font-black text-eq-text leading-none">{upcoming.length}</div>
+              <div className="flex items-center gap-1.5">
+                <div className="text-center bg-eq-card border border-eq-border rounded-lg px-3 py-1.5">
+                  <div className="text-sm font-black text-eq-text leading-none">{upcoming.length}</div>
                   <div className="text-[10px] text-eq-muted mt-0.5">À venir</div>
                 </div>
-                <div className="text-center bg-eq-card border border-eq-border rounded-xl px-4 py-2">
-                  <div className="text-lg font-black text-eq-text leading-none">{totalRunners}</div>
+                <div className="text-center bg-eq-card border border-eq-border rounded-lg px-3 py-1.5">
+                  <div className="text-sm font-black text-eq-text leading-none">{totalRunners}</div>
                   <div className="text-[10px] text-eq-muted mt-0.5">Partants</div>
                 </div>
               </div>
-              <UpdatedAt updatedAt={data.updatedAt} source={data.source} />
+              <span className="hidden sm:block"><UpdatedAt updatedAt={data.updatedAt} source={data.source} /></span>
             </>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               {[0, 1].map(i => (
-                <div key={i} className="bg-eq-card border border-eq-border rounded-xl px-4 py-2 w-16 animate-pulse">
-                  <div className="h-4 w-8 bg-eq-border rounded mb-1" />
-                  <div className="h-2 w-10 bg-eq-border rounded" />
+                <div key={i} className="bg-eq-card border border-eq-border rounded-lg px-3 py-1.5 w-14 animate-pulse">
+                  <div className="h-3 w-6 bg-eq-border rounded mb-1" />
+                  <div className="h-2 w-8 bg-eq-border rounded" />
                 </div>
               ))}
             </div>
@@ -232,10 +232,10 @@ export function LiveRacesGrid({ plan = 'free' }: { plan?: string }) {
         <button
           onClick={() => fetchRaces(true)}
           disabled={refreshing}
-          className="self-start sm:self-auto flex items-center gap-1.5 text-xs text-white hover:text-white/80 transition-colors px-3 py-1.5 rounded-lg border border-eq-border hover:border-eq-border-bright bg-eq-card disabled:opacity-50"
+          className="flex items-center gap-1.5 text-xs text-white hover:text-white/80 transition-colors px-3 py-1.5 rounded-lg border border-eq-border hover:border-eq-border-bright bg-eq-card disabled:opacity-50 shrink-0"
         >
           <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
-          Actualiser
+          <span className="hidden sm:inline">Actualiser</span>
         </button>
       </div>
 

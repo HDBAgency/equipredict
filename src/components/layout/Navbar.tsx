@@ -35,7 +35,7 @@ export function Navbar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none" style={{ background: 'transparent' }}>
       {/* Retour + Logo — top left */}
-      <div className="absolute top-0 left-0 p-4 pointer-events-auto flex items-center gap-2">
+      <div className="absolute top-0 left-0 p-3 sm:p-4 pointer-events-auto flex items-center gap-1.5 sm:gap-2">
         {pathname !== '/' && (
           <button
             onClick={() => router.back()}
@@ -54,7 +54,7 @@ export function Navbar() {
 
       {/* CONNEXION — top right */}
       {!isDashboard && !loggedIn && (
-        <div className="absolute top-0 right-0 p-4 pointer-events-auto">
+        <div className="absolute top-0 right-0 p-3 sm:p-4 pointer-events-auto">
           <Link href="/login" className="px-3 sm:px-5 py-2 border border-white/20 rounded-xl text-xs sm:text-sm font-bold hover:bg-eq-green hover:border-eq-green transition-all block">
             <span className="btn-connexion-text">CONNEXION</span>
           </Link>
