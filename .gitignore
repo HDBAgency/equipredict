@@ -38,6 +38,8 @@ yarn-error.log*
 
 # videos (héberger sur Supabase Storage ou CDN)
 /public/videos/
+# exception : vidéo démo incluse dans le build
+!/public/videos/demo.mp4
 
 # photos source (non nécessaires en prod, seul /public est servi)
 /photo/
