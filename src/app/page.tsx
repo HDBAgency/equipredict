@@ -48,25 +48,25 @@ const RACE_CARDS = [
 
 function RaceCardUI({ title, horses, className = '', style }: typeof RACE_CARDS[0] & { className?: string; style?: React.CSSProperties }) {
   return (
-    <div className={`bg-black/50 border border-white/10 rounded-2xl p-6 shadow-2xl backdrop-blur-sm ${className}`} style={style}>
-      <div className="flex items-center gap-2 mb-5">
+    <div className={`bg-black/50 border border-white/10 rounded-2xl p-4 sm:p-6 shadow-2xl backdrop-blur-sm ${className}`} style={style}>
+      <div className="flex items-center gap-2 mb-4">
         <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #064E3B, #10B981, #34D399, #6EE7B7)' }}>
           <TrendingUp className="w-3.5 h-3.5 text-white" />
         </div>
         <span className="font-bold text-sm text-white truncate">{title}</span>
       </div>
       {horses.map((h, i) => (
-        <div key={i} className={`flex items-center justify-between py-3 ${i < 2 ? 'border-b border-white/10' : ''}`}>
-          <div className="flex items-center gap-3">
-            <span className="text-xl">{h.medal}</span>
+        <div key={i} className={`flex items-center justify-between py-2.5 ${i < 2 ? 'border-b border-white/10' : ''}`}>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-lg sm:text-xl">{h.medal}</span>
             <div>
               <div className="font-semibold text-sm text-white">{h.name}</div>
-              <div className="text-[11px] text-white/50">Score IA: {h.score}/100</div>
+              <div className="text-xs text-white/50">Score IA: {h.score}/100</div>
             </div>
           </div>
           <div className="text-right">
-            <div className="font-black text-lg text-white">{h.prob}</div>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${h.badge}`}>{h.level}</span>
+            <div className="font-black text-base sm:text-lg text-white">{h.prob}</div>
+            <span className={`text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full border ${h.badge}`}>{h.level}</span>
           </div>
         </div>
       ))}
@@ -83,7 +83,7 @@ export default function HomePage() {
     <div className="flex flex-col">
 
       {/* Hero — vidéo en fond */}
-      <section className="relative overflow-hidden -mt-16 min-h-[600px] sm:min-h-[800px] lg:min-h-[1080px]">
+      <section className="relative overflow-hidden -mt-16 min-h-[500px] sm:min-h-[700px] lg:min-h-[1080px]">
         {/* Vidéo de fond */}
         <video
           src="https://mkzkkwqxarnnoamxnzyu.supabase.co/storage/v1/object/public/videos/demo.mp4"
@@ -97,15 +97,15 @@ export default function HomePage() {
         {/* Overlay sombre pour lisibilité du texte */}
         <div className="absolute inset-0 bg-black/75" style={{ zIndex: 1 }} />
         {/* Fondu noir en bas */}
-        <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, black)', zIndex: 2 }} />
+        <div className="absolute bottom-0 left-0 right-0 h-32 sm:h-64 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, black)', zIndex: 2 }} />
         <div
-          className="relative flex items-start justify-center min-h-[600px] sm:min-h-[800px] lg:min-h-[1080px]"
+          className="relative flex items-start justify-center min-h-[500px] sm:min-h-[700px] lg:min-h-[1080px]"
           style={{ paddingTop: 'clamp(160px, 23vh, 250px)', zIndex: 3 }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 text-center w-full">
             <HeroTitle />
 
-            <p className="text-sm sm:text-base text-white max-w-2xl mx-auto mb-8 sm:mb-10 animate-fade-up font-bold" style={{ animationDelay: '0.2s' }}>
+            <p className="text-sm sm:text-base text-white max-w-2xl mx-auto mb-6 sm:mb-10 animate-fade-up font-bold px-2 sm:px-0" style={{ animationDelay: '0.2s' }}>
               Analysez les données, anticipez les performances et obtenez des prédictions claires
               avec niveau de confiance pour chaque course du jour.
             </p>
@@ -170,7 +170,7 @@ export default function HomePage() {
               { src: '/photo/partenaires/RMC_2025.svg.png', alt: 'RMC' },
               { src: '/photo/partenaires/23fglogo820blanc.png', alt: 'Partenaire' },
             ].map((logo, i) => (
-              <img key={i} src={logo.src} alt={logo.alt} style={{ height: '40px', width: 'auto', display: 'inline-block', marginRight: '60px', filter: 'brightness(0) invert(1)' }} />
+              <img key={i} src={logo.src} alt={logo.alt} style={{ height: '32px', width: 'auto', display: 'inline-block', marginRight: 'clamp(24px, 5vw, 60px)', filter: 'brightness(0) invert(1)' }} />
             ))}
           </div>
         </div>

@@ -18,7 +18,7 @@ export function Footer() {
   return (
     <footer className="border-t border-eq-border bg-eq-surface/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-10">
 
           {/* Brand */}
           <div className="md:col-span-2">
@@ -32,9 +32,9 @@ export function Footer() {
               L&apos;intelligence artificielle au service des courses hippiques.
               Analysez. Prédisez. Optimisez.
             </p>
-            <div className="flex items-center gap-2 mt-4 text-xs text-eq-muted border border-eq-border rounded-lg px-3 py-2 w-fit">
-              <Shield className="w-3.5 h-3.5 text-eq-amber" />
-              Jeu responsable — 18+ — Joueurs Info Service : 09 74 75 13 13
+            <div className="flex items-start gap-2 mt-4 text-xs text-eq-muted border border-eq-border rounded-lg px-3 py-2 w-fit max-w-full">
+              <Shield className="w-3.5 h-3.5 text-eq-amber shrink-0 mt-0.5" />
+              <span>Jeu responsable — 18+ — Joueurs Info Service : 09 74 75 13 13</span>
             </div>
           </div>
 
@@ -55,7 +55,7 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="border-t border-eq-border mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-eq-muted">
+        <div className="border-t border-eq-border mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-eq-muted text-center sm:text-left">
           <span>© 2026 EquiPredict. Tous droits réservés.</span>
           <span className="text-center">
             Les prédictions sont informatives et ne garantissent aucun résultat. Jouez responsable.

@@ -72,7 +72,7 @@ export default function PricingPage() {
 
       {/* Header */}
       <div className="text-center mb-14">
-        <h1 className="text-5xl sm:text-6xl font-black mb-4">
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black mb-4 leading-tight">
           CHOISISSEZ VOTRE <span style={{ background: 'linear-gradient(135deg, #064E3B, #10B981, #34D399, #6EE7B7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>NIVEAU</span>
         </h1>
         <p className="text-white text-lg max-w-xl mx-auto">
@@ -82,7 +82,7 @@ export default function PricingPage() {
       </div>
 
       {/* Pricing cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-20">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8 md:gap-10 mb-16 sm:mb-20">
         {PLANS.map(({ id, name, icon: Icon, description, cta, href, popular }) => {
           const features = PLAN_HIGHLIGHTS[id]
           const price = PLAN_PRICES[id]
@@ -95,7 +95,7 @@ export default function PricingPage() {
                   ? 'border-gradient bg-eq-card shadow-2xl shadow-eq-green/15 scale-105'
                   : 'border border-eq-border bg-eq-card'
               }`}
-              style={{ padding: '20px', minHeight: 'auto' }}
+              style={{ padding: 'clamp(16px, 3vw, 24px)', minHeight: 'auto' }}
             >
               {popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-eq-green rounded-full text-sm font-bold text-white whitespace-nowrap">
@@ -103,30 +103,30 @@ export default function PricingPage() {
                 </div>
               )}
 
-              <div className="flex items-center gap-5 mb-8">
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${
+              <div className="flex items-center gap-3 sm:gap-5 mb-6 sm:mb-8">
+                <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shrink-0 ${
                   popular ? 'bg-eq-green text-white' : 'bg-eq-surface border border-eq-border text-eq-muted'
                 }`}>
-                  <Icon className="w-8 h-8" />
+                  <Icon className="w-6 h-6 sm:w-8 sm:h-8" />
                 </div>
                 <div>
-                  <div className="text-2xl font-black text-eq-text uppercase">{name}</div>
-                  <div className="text-sm text-white mt-1">{description}</div>
+                  <div className="text-xl sm:text-2xl font-black text-eq-text uppercase">{name}</div>
+                  <div className="text-xs sm:text-sm text-white mt-1">{description}</div>
                 </div>
               </div>
 
-              <div className="mb-10">
+              <div className="mb-6 sm:mb-10">
                 {price === 0 ? (
-                  <div className="text-6xl font-black text-eq-text uppercase">Gratuit</div>
+                  <div className="text-4xl sm:text-6xl font-black text-eq-text uppercase">Gratuit</div>
                 ) : (
                   <div className="flex items-end gap-2">
-                    <span className="text-6xl font-black text-eq-text">{price}€</span>
-                    <span className="text-white mb-3 text-lg">/mois</span>
+                    <span className="text-4xl sm:text-6xl font-black text-eq-text">{price}€</span>
+                    <span className="text-white mb-2 sm:mb-3 text-base sm:text-lg">/mois</span>
                   </div>
                 )}
               </div>
 
-              <ul className="space-y-5 mb-12 flex-1">
+              <ul className="space-y-3 sm:space-y-5 mb-8 sm:mb-12 flex-1">
                 {features.map((f, i) => (
                   <li key={i} className="flex items-start gap-3 text-base">
                     <Check className="w-5 h-5 text-eq-green shrink-0 mt-0.5" />

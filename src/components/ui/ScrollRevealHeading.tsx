@@ -23,7 +23,7 @@ export default function ScrollRevealHeading({ line1, line2, className = '', styl
   }, [])
 
   return (
-    <h2 ref={ref} className={`text-5xl sm:text-7xl font-black text-center mb-6 uppercase ${className}`} style={style}>
+    <h2 ref={ref} className={`text-3xl sm:text-5xl lg:text-7xl font-black text-center mb-4 sm:mb-6 uppercase leading-tight ${className}`} style={style}>
       <span
         className="block"
         style={{

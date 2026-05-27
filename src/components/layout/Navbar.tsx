@@ -40,10 +40,10 @@ export function Navbar() {
         </Link>
       </div>
 
-      {/* CONNEXION — top right (desktop) */}
+      {/* CONNEXION — top right */}
       {!isDashboard && !loggedIn && (
-        <div className="absolute top-0 right-0 p-4 pointer-events-auto hidden md:block">
-          <Link href="/login" className="px-5 py-2 border border-white/20 rounded-xl text-sm font-bold text-white hover:bg-white/10 transition-all block">
+        <div className="absolute top-0 right-0 p-4 pointer-events-auto">
+          <Link href="/login" className="px-3 sm:px-5 py-2 border border-white/20 rounded-xl text-xs sm:text-sm font-bold text-white hover:bg-white/10 transition-all block">
             CONNEXION
           </Link>
         </div>

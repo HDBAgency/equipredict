@@ -40,7 +40,7 @@ const LAYOUT: Cfg[] = [
 
 function Card({ name, avatar, role, text, stars }: typeof TESTIMONIALS[0]) {
   return (
-    <div className="bg-black/55 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+    <div className="bg-black/55 border border-white/10 rounded-2xl p-4 sm:p-6 backdrop-blur-sm">
       <div className="flex items-center gap-1 mb-4">
         {Array.from({ length: stars }).map((_, i) => (
           <Star key={i} className="w-4 h-4 text-eq-amber fill-eq-amber" />
@@ -90,7 +90,7 @@ export default function FloatingTestimonials() {
       </div>
 
       {/* Mobile / tablet: simple grid */}
-      <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4 px-4">
+      <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2 sm:px-4">
         {TESTIMONIALS.map(t => <Card key={t.name} {...t} />)}
       </div>
     </>

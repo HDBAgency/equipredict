@@ -16,7 +16,7 @@ export default function HeroTitle() {
   }, [])
 
   return (
-    <h1 ref={ref} className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight mb-6 uppercase">
+    <h1 ref={ref} className="text-3xl sm:text-5xl lg:text-7xl font-black tracking-tight mb-4 sm:mb-6 uppercase leading-tight">
       <span
         className="block"
         style={{
