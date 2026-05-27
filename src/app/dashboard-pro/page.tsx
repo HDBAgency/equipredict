@@ -3,7 +3,6 @@ import { CalendarDays, CloudRain, Thermometer } from 'lucide-react'
 import { PremiumRacesGrid } from '@/components/dashboard/PremiumRacesGrid'
 import { ProPaywallGate } from '@/components/dashboard/ProPaywallGate'
 import { ProStatsPanel } from '@/components/dashboard/ProStatsPanel'
-import { ProExportBar } from '@/components/dashboard/ProExportBar'
 import LogoutButton from '@/components/ui/LogoutButton'
 
 export default async function DashboardProPage({
@@ -52,9 +51,6 @@ export default async function DashboardProPage({
 
         {/* Statistiques avancées */}
         <ProStatsPanel />
-
-        {/* Barre export */}
-        <ProExportBar />
 
         {/* Grille des courses (identique au premium) */}
         <Suspense fallback={
