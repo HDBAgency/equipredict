@@ -185,7 +185,7 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="pt-10 sm:pt-24 lg:pt-40 pb-20 sm:pb-24 relative z-10">
+      <section className="pt-10 sm:pt-24 lg:pt-40 pb-32 sm:pb-24 relative z-10">
         <div className="px-4 sm:px-8">
           <ScrollRevealHeading line1={"Ce qu'en disent"} line2="nos utilisateurs" />
           <div className="mt-10 sm:mt-20">
