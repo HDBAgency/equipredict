@@ -45,8 +45,8 @@ export function Navbar() {
       {/* CONNEXION — top right */}
       {!isDashboard && !loggedIn && (
         <div className="absolute top-0 right-0 p-4 pointer-events-auto">
-          <Link href="/login" className="px-3 sm:px-5 py-2 border border-white/20 rounded-xl text-xs sm:text-sm font-bold text-white hover:bg-eq-green hover:border-eq-green transition-all block">
-            CONNEXION
+          <Link href="/login" className="px-3 sm:px-5 py-2 border border-white/20 rounded-xl text-xs sm:text-sm font-bold hover:bg-eq-green hover:border-eq-green transition-all block">
+            <span className="btn-connexion-text">CONNEXION</span>
           </Link>
         </div>
       )}
