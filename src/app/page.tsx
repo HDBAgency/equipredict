@@ -95,7 +95,7 @@ export default function HomePage() {
           style={{ zIndex: 0 }}
         />
         {/* Overlay sombre pour lisibilité du texte */}
-        <div className="absolute inset-0 bg-black/75" style={{ zIndex: 1 }} />
+        <div className="absolute inset-0" style={{ zIndex: 1, background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.75) 15%)' }} />
         {/* Fondu noir en bas */}
         <div className="absolute bottom-0 left-0 right-0 h-32 sm:h-64 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, black)', zIndex: 2 }} />
         <div
