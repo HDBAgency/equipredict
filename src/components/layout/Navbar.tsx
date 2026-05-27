@@ -35,8 +35,10 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none" style={{ background: 'transparent' }}>
       {/* Logo — top left */}
       <div className="absolute top-0 left-0 p-4 pointer-events-auto">
-        <Link href="/" className="flex items-center px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10 transition-all">
-          <span className="text-sm font-black text-white">Equi<span style={{ background: 'linear-gradient(135deg, #10B981, #34D399)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Predict</span></span>
+        <Link href="/" className="logo-link flex items-center px-4 py-2 rounded-xl border border-white/20 transition-all">
+          <span className="text-sm font-black">
+            <span className="logo-equi text-white">Equi</span><span className="logo-predict">Predict</span>
+          </span>
         </Link>
       </div>
 

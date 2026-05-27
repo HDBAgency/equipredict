@@ -98,6 +98,28 @@ body {
   100% { background-position:  200% center; }
 }
 
+/* Logo EquiPredict hover */
+.logo-link:hover {
+  background-color: #10B981;
+  border-color: #10B981;
+}
+.logo-predict {
+  background: linear-gradient(135deg, #10B981, #34D399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all 0.2s;
+}
+.logo-link:hover .logo-predict {
+  background: none;
+  -webkit-text-fill-color: white;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+}
+.logo-link:hover .logo-equi {
+  color: white;
+}
+
 .btn-connexion {
   transition: background 0.3s ease, border-color 0.3s ease;
 }
