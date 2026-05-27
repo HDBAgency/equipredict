@@ -98,7 +98,7 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-black/55" style={{ zIndex: 1 }} />
         <div
           className="relative flex items-start justify-center min-h-[600px] sm:min-h-[800px] lg:min-h-[1080px]"
-          style={{ paddingTop: 'clamp(160px, 22vh, 260px)', zIndex: 2 }}
+          style={{ paddingTop: 'clamp(220px, 30vh, 360px)', zIndex: 2 }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 text-center w-full">
             <HeroTitle />
