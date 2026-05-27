@@ -96,9 +96,11 @@ export default function HomePage() {
         />
         {/* Overlay sombre pour lisibilité du texte */}
         <div className="absolute inset-0 bg-black/75" style={{ zIndex: 1 }} />
+        {/* Fondu noir en bas */}
+        <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, black)', zIndex: 2 }} />
         <div
           className="relative flex items-start justify-center min-h-[600px] sm:min-h-[800px] lg:min-h-[1080px]"
-          style={{ paddingTop: 'clamp(320px, 45vh, 580px)', zIndex: 2 }}
+          style={{ paddingTop: 'clamp(320px, 45vh, 580px)', zIndex: 3 }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 text-center w-full">
             <HeroTitle />
