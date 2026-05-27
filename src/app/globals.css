@@ -169,6 +169,15 @@ body {
   100% { background-position: -200% center; }
 }
 
+/* Bouton CTA — clignotement du texte au survol */
+@keyframes blink-text {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.btn-cta-blink:hover span {
+  animation: blink-text 0.6s step-start infinite;
+}
+
 /* Back button */
 .back-btn {
   background: transparent;
