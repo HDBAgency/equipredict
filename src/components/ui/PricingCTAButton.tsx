@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { useState } from 'react'
 
 interface Props {
   planId: string
@@ -16,79 +15,75 @@ const PLAN_DASHBOARD: Record<string, string> = {
   pro:     '/dashboard-pro',
 }
 
+const btnClass = (popular: boolean, loading?: boolean) =>
+  `w-full font-bold py-5 rounded-xl text-lg transition-all ${loading ? 'opacity-60 cursor-not-allowed' : ''} ${
+    popular
+      ? 'bg-eq-green hover:bg-eq-green-light text-white hover:shadow-lg hover:shadow-eq-green/30'
+      : 'bg-eq-surface border border-eq-border text-white hover:bg-eq-green hover:border-eq-green hover:shadow-lg hover:shadow-eq-green/30'
+  }`
+
 export default function PricingCTAButton({ planId, href, label, popular }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [userPlan, setUserPlan] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function check() {
-      const { createClient } = await import('@/lib/supabase/client')
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-      setIsLoggedIn(true)
-      const { data } = await supabase.from('profiles').select('plan').eq('id', session.user.id).single()
-      setUserPlan(data?.plan ?? 'free')
-    }
-    check()
-  }, [])
-
-  // Plan gratuit → inscription
-  if (planId === 'free') {
-    return (
-      <Link
-        href={isLoggedIn ? '/dashboard-gratuit' : href}
-        className={`block text-center font-bold py-5 rounded-xl text-lg transition-all ${
-          popular
-            ? 'bg-eq-green hover:bg-eq-green-light text-white hover:shadow-lg hover:shadow-eq-green/30'
-            : 'bg-eq-surface border border-eq-border text-white hover:bg-eq-green hover:border-eq-green hover:shadow-lg hover:shadow-eq-green/30'
-        }`}
-      >
-        {label}
-      </Link>
-    )
+  async function getSession() {
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    return { supabase, session }
   }
 
-  // Utilisateur déjà sur ce plan → aller au dashboard
-  if (isLoggedIn && userPlan === planId) {
-    return (
-      <Link
-        href={PLAN_DASHBOARD[planId]}
-        className={`block text-center font-bold py-5 rounded-xl text-lg transition-all ${
-          popular
-            ? 'bg-eq-green hover:bg-eq-green-light text-white hover:shadow-lg hover:shadow-eq-green/30'
-            : 'bg-eq-surface border border-eq-border text-white hover:bg-eq-green hover:border-eq-green hover:shadow-lg hover:shadow-eq-green/30'
-        }`}
-      >
-        Accéder au dashboard
-      </Link>
-    )
+  // Plan gratuit : dashboard si connecté, sinon inscription
+  async function handleFreeClick() {
+    setLoading(true)
+    const { session } = await getSession()
+    setLoading(false)
+    window.location.href = session ? '/dashboard-gratuit' : href
   }
 
-  // Paiement Stripe
+  // Plans payants : checkout Stripe si connecté, sinon inscription
   async function handleCheckout() {
-    if (!isLoggedIn) {
-      window.location.href = href
-      return
-    }
     setLoading(true)
     setError('')
+    const { supabase, session } = await getSession()
+    if (!session) {
+      window.location.href = href
+      setLoading(false)
+      return
+    }
+    // Déjà sur ce plan → dashboard
+    const { data } = await supabase.from('profiles').select('plan').eq('id', session.user.id).single()
+    if ((data?.plan ?? 'free') === planId) {
+      window.location.href = PLAN_DASHBOARD[planId]
+      setLoading(false)
+      return
+    }
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: planId }),
       })
-      const data = await res.json()
-      if (data.url) window.location.href = data.url
-      else setError(data.error ?? 'Erreur lors du paiement')
+      const json = await res.json()
+      if (json.url) window.location.href = json.url
+      else setError(json.error ?? 'Erreur lors du paiement')
     } catch {
       setError('Erreur réseau, réessayez.')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (planId === 'free') {
+    return (
+      <button
+        onClick={handleFreeClick}
+        disabled={loading}
+        className={btnClass(popular, loading)}
+      >
+        {loading ? 'Chargement...' : label}
+      </button>
+    )
   }
 
   return (
@@ -97,11 +92,7 @@ export default function PricingCTAButton({ planId, href, label, popular }: Props
       <button
         onClick={handleCheckout}
         disabled={loading}
-        className={`w-full font-bold py-5 rounded-xl text-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
-          popular
-            ? 'bg-eq-green hover:bg-eq-green-light text-white hover:shadow-lg hover:shadow-eq-green/30'
-            : 'bg-eq-surface border border-eq-border text-white hover:bg-eq-green hover:border-eq-green hover:shadow-lg hover:shadow-eq-green/30'
-        }`}
+        className={btnClass(popular, loading)}
       >
         {loading ? 'Redirection...' : label}
       </button>
