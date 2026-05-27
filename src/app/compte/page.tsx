@@ -87,8 +87,7 @@ export default async function ComptePage() {
             )}
             <a
               href="/pricing"
-              className="flex-1 flex items-center justify-center py-3.5 rounded-xl font-bold text-white text-sm transition-all hover:shadow-lg hover:shadow-eq-green/25 border border-eq-green/40 hover:border-eq-green"
-              style={{ background: 'linear-gradient(135deg, #1a1a2e, #064E3B)' }}
+              className="btn-pro flex-1 flex items-center justify-center py-3.5 rounded-xl font-bold text-white text-sm transition-all"
             >
               Passer Pro
             </a>

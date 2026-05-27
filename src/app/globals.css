@@ -136,6 +136,22 @@ body {
   animation: shimmer-text 2.5s linear infinite;
 }
 
+/* Bouton PASSER PRO — shimmer vert animé */
+.btn-pro {
+  background: linear-gradient(90deg, #064E3B 0%, #10B981 30%, #34D399 50%, #6EE7B7 60%, #10B981 75%, #064E3B 100%);
+  background-size: 250% auto;
+  animation: shimmer-pro 2.5s linear infinite;
+  border: none !important;
+}
+.btn-pro:hover {
+  animation-duration: 1.2s;
+  box-shadow: 0 0 20px rgba(16,185,129,.5), 0 0 40px rgba(16,185,129,.2);
+}
+@keyframes shimmer-pro {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
 /* Back button */
 .back-btn {
   background: transparent;
