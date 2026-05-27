@@ -82,26 +82,23 @@ export default function HomePage() {
     </div>
     <div className="flex flex-col">
 
-      {/* Vidéo démo — plein écran 1920×1080 */}
-      <section className="w-full" style={{ maxWidth: '1920px', margin: '0 auto' }}>
-        <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
-          <video
-            src="https://mkzkkwqxarnnoamxnzyu.supabase.co/storage/v1/object/public/videos/demo.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="w-full h-full object-cover"
-            style={{ display: 'block', maxHeight: '1080px' }}
-          />
-        </div>
-      </section>
-
-      {/* Hero */}
+      {/* Hero — vidéo en fond */}
       <section className="relative overflow-hidden -mt-16 min-h-[600px] sm:min-h-[800px] lg:min-h-[1080px]">
+        {/* Vidéo de fond */}
+        <video
+          src="https://mkzkkwqxarnnoamxnzyu.supabase.co/storage/v1/object/public/videos/demo.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ zIndex: 0 }}
+        />
+        {/* Overlay sombre pour lisibilité du texte */}
+        <div className="absolute inset-0 bg-black/55" style={{ zIndex: 1 }} />
         <div
           className="relative flex items-start justify-center min-h-[600px] sm:min-h-[800px] lg:min-h-[1080px]"
-          style={{ paddingTop: 'clamp(110px, 14vh, 170px)' }}
+          style={{ paddingTop: 'clamp(110px, 14vh, 170px)', zIndex: 2 }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 text-center w-full">
             <HeroTitle />
