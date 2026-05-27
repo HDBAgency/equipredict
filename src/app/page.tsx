@@ -80,7 +80,7 @@ export default function HomePage() {
     <div className="fixed top-0 right-0 z-50 p-4">
       <LogoutButton />
     </div>
-    <div className="flex flex-col">
+    <div className="flex flex-col w-full overflow-x-hidden">
 
       {/* Hero — vidéo en fond */}
       <section className="relative overflow-hidden -mt-16 min-h-[500px] sm:min-h-[700px] lg:min-h-[1080px]">
@@ -153,8 +153,8 @@ export default function HomePage() {
       </section>
 
       {/* Partenaires */}
-      <section className="pt-32 sm:pt-24 lg:pt-60 pb-10 overflow-hidden">
-        <div className="overflow-hidden">
+      <section className="pt-32 sm:pt-24 lg:pt-60 pb-10 overflow-hidden w-full">
+        <div className="overflow-hidden w-full">
           <div className="animate-marquee whitespace-nowrap">
             {[
               { src: '/photo/partenaires/PMU.svg.png', alt: 'PMU' },
