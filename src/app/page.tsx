@@ -95,7 +95,7 @@ export default function HomePage() {
           style={{ zIndex: 0 }}
         />
         {/* Overlay sombre pour lisibilité du texte */}
-        <div className="absolute inset-0 bg-black/55" style={{ zIndex: 1 }} />
+        <div className="absolute inset-0 bg-black/75" style={{ zIndex: 1 }} />
         <div
           className="relative flex items-start justify-center min-h-[600px] sm:min-h-[800px] lg:min-h-[1080px]"
           style={{ paddingTop: 'clamp(280px, 38vh, 460px)', zIndex: 2 }}
