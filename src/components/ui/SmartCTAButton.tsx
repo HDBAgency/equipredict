@@ -1,11 +1,24 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function SmartCTAButton() {
-  const [href] = useState('/pricing')
+  const [href, setHref] = useState('/pricing')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return
+      const { data: profile } = await supabase.from('profiles').select('plan').eq('id', data.session.user.id).single()
+      const plan = profile?.plan ?? 'free'
+      if (plan === 'pro') setHref('/dashboard-pro')
+      else if (plan === 'premium') setHref('/dashboard-premium')
+      else setHref('/dashboard-gratuit')
+    })
+  }, [])
 
   return (
     <Link
