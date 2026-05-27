@@ -99,8 +99,8 @@ export default function HomePage() {
         {/* Fondu noir en bas */}
         <div className="absolute bottom-0 left-0 right-0 h-32 sm:h-64 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, black)', zIndex: 2 }} />
         <div
-          className="absolute inset-0 flex flex-col items-center justify-start px-4 sm:px-6 lg:px-8 text-center"
-          style={{ paddingTop: 'clamp(160px, 23vh, 250px)', zIndex: 3 }}
+          className="absolute inset-0 flex flex-col items-center justify-start px-4 sm:px-6 lg:px-8 text-center pt-[110px] sm:pt-[160px] lg:pt-[250px]"
+          style={{ zIndex: 3 }}
         >
           <div className="w-full max-w-2xl sm:max-w-7xl">
             <HeroTitle />
