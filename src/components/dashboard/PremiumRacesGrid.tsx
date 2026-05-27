@@ -4,7 +4,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import {
   RefreshCw, AlertCircle, ChevronDown, Clock, Timer,
   MapPin, Users, TrendingUp, TrendingDown, Minus,
-  Wind, Droplets, Sun, Cloud, Bell, Brain, Zap,
+  Wind, Droplets, Sun, Cloud, Bell, Brain, Zap, Star,
 } from 'lucide-react'
 import type { LiveResponse, LiveRace, LiveHorse } from '@/types/live'
 import type { RaceType } from '@/types'
@@ -96,10 +96,14 @@ const PremiumRaceCard = memo(function PremiumRaceCard({
   race,
   flashDown,
   flashUp,
+  isFavorite,
+  onToggleFavorite,
 }: {
   race: LiveRace
   flashDown: Set<string>
   flashUp: Set<string>
+  isFavorite?: boolean
+  onToggleFavorite?: (e: React.MouseEvent) => void
 }) {
   const { label: typeLabel, color: typeColor } = RACE_TYPE_BADGE[race.raceType] ?? { label: race.raceType, color: '' }
   const soon = isStartingSoon(race)
@@ -135,10 +139,21 @@ const PremiumRaceCard = memo(function PremiumRaceCard({
           </div>
           <h3 className="font-bold text-eq-text text-sm truncate">{race.name}</h3>
         </div>
-        <div className="text-right shrink-0">
-          <div className="flex items-center gap-1 text-sm font-mono font-bold text-eq-text">
-            <Clock className="w-3.5 h-3.5 text-eq-green" />
-            {formatTime(race.startTime)}
+        <div className="flex items-center gap-2 shrink-0">
+          {onToggleFavorite && (
+            <button
+              onClick={onToggleFavorite}
+              className="p-1 rounded-md hover:bg-eq-surface transition-colors"
+              title={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            >
+              <Star className={`w-4 h-4 transition-colors ${isFavorite ? 'text-eq-amber fill-eq-amber' : 'text-eq-muted hover:text-eq-amber'}`} />
+            </button>
+          )}
+          <div className="text-right">
+            <div className="flex items-center gap-1 text-sm font-mono font-bold text-eq-text">
+              <Clock className="w-3.5 h-3.5 text-eq-green" />
+              {formatTime(race.startTime)}
+            </div>
           </div>
         </div>
       </div>
@@ -249,11 +264,29 @@ const PremiumRaceCard = memo(function PremiumRaceCard({
 
 // ─── Grid principale ───────────────────────────────────────────────────────────
 
-export function PremiumRacesGrid({ activeType, basePath = '/dashboard-premium', detailBasePath }: { activeType: string; basePath?: string; detailBasePath?: string }) {
+export function PremiumRacesGrid({ activeType, basePath = '/dashboard-premium', detailBasePath, showFavorites = false }: { activeType: string; basePath?: string; detailBasePath?: string; showFavorites?: boolean }) {
   const [data, setData]             = useState<LiveResponse | null>(null)
   const [error, setError]           = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [showPast, setShowPast]     = useState(false)
+  const [favorites, setFavorites]   = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    const stored = localStorage.getItem('eq_pro_favorites')
+    if (stored) setFavorites(new Set(JSON.parse(stored)))
+  }, [])
+
+  function toggleFavorite(raceId: string, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    setFavorites(prev => {
+      const next = new Set(prev)
+      if (next.has(raceId)) next.delete(raceId)
+      else next.add(raceId)
+      localStorage.setItem('eq_pro_favorites', JSON.stringify([...next]))
+      return next
+    })
+  }
 
   const prevOddsRef = useRef<OddsMap>({})
   const [flashDown, setFlashDown] = useState<Set<string>>(new Set())
@@ -307,9 +340,15 @@ export function PremiumRacesGrid({ activeType, basePath = '/dashboard-premium', 
   }, [fetchRaces])
 
   const allRaces: LiveRace[] = data?.races ?? []
-  const filtered = allRaces.filter(r => activeType === 'all' || r.raceType === activeType)
+  const filtered = activeType === 'favoris'
+    ? allRaces.filter(r => favorites.has(r.id))
+    : allRaces.filter(r => activeType === 'all' || r.raceType === activeType)
   const upcoming = filtered.filter(r => !isPast(r))
   const past     = filtered.filter(r => isPast(r)).reverse()
+
+  const tabs = showFavorites
+    ? [...TYPE_TABS, { value: 'favoris' as RaceType | 'all' | 'favoris', label: '⭐ Favoris' }]
+    : TYPE_TABS
 
   const totalRunners = allRaces.reduce((s, r) => s + r.numberOfRunners, 0)
 
@@ -317,13 +356,15 @@ export function PremiumRacesGrid({ activeType, basePath = '/dashboard-premium', 
     <div>
       {/* Onglets filtre */}
       <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
-        {TYPE_TABS.map(({ value, label }) => (
+        {tabs.map(({ value, label }) => (
           <a
             key={value}
             href={value === 'all' ? basePath : `${basePath}?type=${value}`}
             className={`shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeType === value
-                ? 'bg-eq-green text-white shadow-lg shadow-eq-green/25'
+                ? value === 'favoris'
+                  ? 'bg-eq-amber text-white shadow-lg shadow-eq-amber/25'
+                  : 'bg-eq-green text-white shadow-lg shadow-eq-green/25'
                 : 'bg-eq-card border border-eq-border text-eq-muted hover:text-eq-text hover:border-eq-border-bright'
             }`}
           >
@@ -405,11 +446,15 @@ export function PremiumRacesGrid({ activeType, basePath = '/dashboard-premium', 
       {/* Aucune course */}
       {data && upcoming.length === 0 && (
         <div className="text-center py-16">
-          <div className="w-12 h-12 rounded-2xl bg-eq-green/10 border border-eq-green/20 flex items-center justify-center mx-auto mb-4">
-            <Timer className="w-6 h-6 text-eq-green" />
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 ${activeType === 'favoris' ? 'bg-eq-amber/10 border border-eq-amber/20' : 'bg-eq-green/10 border border-eq-green/20'}`}>
+            {activeType === 'favoris' ? <Star className="w-6 h-6 text-eq-amber" /> : <Timer className="w-6 h-6 text-eq-green" />}
           </div>
-          <h3 className="text-lg font-bold text-eq-text mb-2">Aucune course à venir</h3>
-          <p className="text-white text-sm">Essayez un autre filtre ou revenez demain.</p>
+          <h3 className="text-lg font-bold text-eq-text mb-2">
+            {activeType === 'favoris' ? 'Aucun favori ajouté' : 'Aucune course à venir'}
+          </h3>
+          <p className="text-white text-sm">
+            {activeType === 'favoris' ? 'Cliquez sur l\'étoile ⭐ d\'une course pour l\'ajouter ici.' : 'Essayez un autre filtre ou revenez demain.'}
+          </p>
         </div>
       )}
 
@@ -419,7 +464,7 @@ export function PremiumRacesGrid({ activeType, basePath = '/dashboard-premium', 
           {upcoming.map(race => (
             detailBasePath ? (
               <a key={race.id} href={`${detailBasePath}/${race.id}`} className="block hover:scale-[1.01] transition-transform">
-                <PremiumRaceCard race={race} flashDown={flashDown} flashUp={flashUp} />
+                <PremiumRaceCard race={race} flashDown={flashDown} flashUp={flashUp} isFavorite={showFavorites ? favorites.has(race.id) : undefined} onToggleFavorite={showFavorites ? (e) => toggleFavorite(race.id, e) : undefined} />
               </a>
             ) : (
               <PremiumRaceCard key={race.id} race={race} flashDown={flashDown} flashUp={flashUp} />
@@ -450,7 +495,7 @@ export function PremiumRacesGrid({ activeType, basePath = '/dashboard-premium', 
               {past.map(race => (
                 detailBasePath ? (
                   <a key={race.id} href={`${detailBasePath}/${race.id}`} className="block">
-                    <PremiumRaceCard race={race} flashDown={flashDown} flashUp={flashUp} />
+                    <PremiumRaceCard race={race} flashDown={flashDown} flashUp={flashUp} isFavorite={showFavorites ? favorites.has(race.id) : undefined} onToggleFavorite={showFavorites ? (e) => toggleFavorite(race.id, e) : undefined} />
                   </a>
                 ) : (
                   <PremiumRaceCard key={race.id} race={race} flashDown={flashDown} flashUp={flashUp} />

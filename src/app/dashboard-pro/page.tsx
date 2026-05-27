@@ -68,7 +68,7 @@ export default async function DashboardProPage({
             ))}
           </div>
         }>
-          <PremiumRacesGrid activeType={activeType} basePath="/dashboard-pro" detailBasePath="/dashboard-pro/courses" />
+          <PremiumRacesGrid activeType={activeType} basePath="/dashboard-pro" detailBasePath="/dashboard-pro/courses" showFavorites />
         </Suspense>
 
         <p className="text-center text-xs mt-10">
