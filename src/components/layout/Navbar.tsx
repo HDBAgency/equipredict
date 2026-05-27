@@ -32,7 +32,7 @@ export function Navbar() {
   const isDashboard = pathname === '/' || pathname.startsWith('/dashboard-gratuit') || pathname.startsWith('/dashboard-premium') || pathname.startsWith('/dashboard-pro') || pathname.startsWith('/pricing')
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-transparent pointer-events-none">
+    <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none" style={{ background: 'transparent' }}>
       {/* Logo — top left */}
       <div className="absolute top-0 left-0 p-4 pointer-events-auto">
         <Link href="/" className="flex items-center px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10 transition-all">
