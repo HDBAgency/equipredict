@@ -86,7 +86,7 @@ export default function HomePage() {
       <section className="w-full" style={{ maxWidth: '1920px', margin: '0 auto' }}>
         <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
           <video
-            src="/videos/demo.mp4"
+            src="https://mkzkkwqxarnnoamxnzyu.supabase.co/storage/v1/object/public/videos/demo.mp4"
             autoPlay
             muted
             loop
