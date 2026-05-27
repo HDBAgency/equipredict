@@ -82,6 +82,21 @@ export default function HomePage() {
     </div>
     <div className="flex flex-col">
 
+      {/* Vidéo démo — plein écran 1920×1080 */}
+      <section className="w-full" style={{ maxWidth: '1920px', margin: '0 auto' }}>
+        <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+          <video
+            src="/videos/demo.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover"
+            style={{ display: 'block', maxHeight: '1080px' }}
+          />
+        </div>
+      </section>
+
       {/* Hero */}
       <section className="relative overflow-hidden -mt-16 min-h-[600px] sm:min-h-[800px] lg:min-h-[1080px]">
         <div
