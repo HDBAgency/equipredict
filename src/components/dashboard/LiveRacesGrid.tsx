@@ -182,10 +182,13 @@ export function LiveRacesGrid({ plan = 'free' }: { plan?: string }) {
 
   const showCountdown = isFree && data !== null && upcoming.length === 0
 
-  // Affichage centré pleine page quand countdown actif
+  // Affichage plein écran (overlay) quand toutes les courses sont passées
   if (showCountdown) {
     return (
-      <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 180px)' }}>
+      <div
+        className="fixed inset-0 z-40 flex items-center justify-center bg-eq-bg"
+        style={{ paddingTop: '64px' }}
+      >
         <NextDayCountdown />
       </div>
     )
