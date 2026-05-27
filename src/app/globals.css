@@ -169,13 +169,36 @@ body {
   100% { background-position: -200% center; }
 }
 
-/* Bouton CTA — clignotement du texte au survol */
-@keyframes blink-text {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
+/* Bouton CTA — shimmer (reflet blanc) au survol */
+@keyframes shimmer-btn {
+  0%   { left: -100%; }
+  100% { left: 150%; }
 }
-.btn-cta-blink:hover span {
-  animation: blink-text 0.6s step-start infinite;
+.btn-cta-blink {
+  position: relative;
+  overflow: hidden;
+}
+.btn-cta-blink::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255,255,255,0) 30%,
+    rgba(255,255,255,0.45) 50%,
+    rgba(255,255,255,0) 70%,
+    transparent 100%
+  );
+  transform: skewX(-15deg);
+  transition: none;
+  pointer-events: none;
+}
+.btn-cta-blink:hover::after {
+  animation: shimmer-btn 0.65s ease forwards;
 }
 
 /* Back button */

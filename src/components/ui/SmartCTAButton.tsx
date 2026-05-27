@@ -26,7 +26,7 @@ export default function SmartCTAButton({ label = 'VOIR LES PRONOSTICS DU JOUR' }
       className="btn-cta-blink flex items-center gap-2 text-white font-bold px-8 py-4 rounded-xl transition-all hover:shadow-2xl hover:-translate-y-0.5 text-base"
       style={{ background: 'linear-gradient(135deg, #064E3B, #10B981, #34D399, #6EE7B7)' }}
     >
-      <span>{label}</span>
+      {label}
       <ArrowRight className="w-5 h-5" />
     </Link>
   )
