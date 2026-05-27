@@ -133,7 +133,7 @@ export default function HomePage() {
       </section>
 
       {/* PMU App — mobile */}
-      <section className="lg:hidden px-4 pt-40 pb-8">
+      <section className="lg:hidden px-4 pt-16 pb-8">
         <div className="text-center mb-8">
           <h2 className="text-3xl sm:text-5xl font-black uppercase">
             <span className="block text-white">PLUS DE 50 COURSES</span>
