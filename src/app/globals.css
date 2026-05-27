@@ -171,8 +171,8 @@ body {
 
 /* Bouton CTA — shimmer (reflet blanc) au survol */
 @keyframes shimmer-btn {
-  0%   { left: -100%; }
-  100% { left: 150%; }
+  0%   { left: -120%; }
+  100% { left: 160%; }
 }
 .btn-cta-blink {
   position: relative;
@@ -182,23 +182,22 @@ body {
   content: '';
   position: absolute;
   top: 0;
-  left: -100%;
-  width: 60%;
+  left: -120%;
+  width: 70%;
   height: 100%;
   background: linear-gradient(
     120deg,
     transparent 0%,
-    rgba(255,255,255,0) 30%,
-    rgba(255,255,255,0.45) 50%,
-    rgba(255,255,255,0) 70%,
+    rgba(255,255,255,0) 20%,
+    rgba(255,255,255,0.65) 50%,
+    rgba(255,255,255,0) 80%,
     transparent 100%
   );
   transform: skewX(-15deg);
-  transition: none;
   pointer-events: none;
 }
 .btn-cta-blink:hover::after {
-  animation: shimmer-btn 0.65s ease forwards;
+  animation: shimmer-btn 0.8s ease infinite;
 }
 
 /* Back button */
