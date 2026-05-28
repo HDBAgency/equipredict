@@ -4,6 +4,36 @@ import type { RaceType, TrackCondition, RaceStatus, WeatherCondition } from '@/t
 import type { LiveHorse, LiveRace, LiveResponse } from '@/types/live'
 import { fetchWeather } from '@/lib/weather'
 
+// ─── Poids du modèle IA (chargés depuis Supabase, fallback sur defaults) ───────
+
+type ModelWeights = {
+  w_form: number; w_odds_rank: number; w_consist: number
+  w_placement: number; w_mvt: number; w_age: number; w_earnings: number
+}
+
+const DEFAULT_WEIGHTS: ModelWeights = {
+  w_form: 0.28, w_odds_rank: 0.25, w_consist: 0.12,
+  w_placement: 0.10, w_mvt: 0.10, w_age: 0.08, w_earnings: 0.07,
+}
+
+async function loadModelWeights(): Promise<ModelWeights> {
+  try {
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/model_weights?select=w_form,w_odds_rank,w_consist,w_placement,w_mvt,w_age,w_earnings&limit=1`
+    const res = await fetch(url, {
+      headers: {
+        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+      },
+      next: { revalidate: 3600 },
+    })
+    if (!res.ok) return DEFAULT_WEIGHTS
+    const rows = await res.json() as ModelWeights[]
+    return rows?.[0] ?? DEFAULT_WEIGHTS
+  } catch {
+    return DEFAULT_WEIGHTS
+  }
+}
+
 // ─── PMU API base ─────────────────────────────────────────────────────────────
 
 const PMU_BASE = 'https://online.turfinfo.api.pmu.fr/rest/client/61/programme'
@@ -210,6 +240,7 @@ function buildLiveRace(
   todayISO: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   participants: any[],
+  weights: ModelWeights = DEFAULT_WEIGHTS,
 ): LiveRace {
   const reunionNum: number = reunion.numOfficiel ?? 1
   const courseNum: number = course.numOrdre ?? course.numExterne ?? 1
@@ -297,9 +328,10 @@ function buildLiveRace(
     // 7. Classe du cheval (gains carrière normalisés) — 0-10
     const earnings = maxEarnings > 0 ? Math.min(10, (h._careerEarnings / maxEarnings) * 10) : 5
 
-    // Pondération finale
-    const raw = form * 0.28 + oddsRank * 0.25 + consist * 0.12 + placement * 0.10
-              + mvt * 0.10 + age * 0.08 + earnings * 0.07
+    // Pondération finale (poids adaptatifs chargés depuis la DB)
+    const raw = form * weights.w_form + oddsRank * weights.w_odds_rank
+              + consist * weights.w_consist + placement * weights.w_placement
+              + mvt * weights.w_mvt + age * weights.w_age + earnings * weights.w_earnings
 
     h.aiScore = Math.round(Math.min(100, Math.max(0, raw * 10)))
     h.confidenceLevel = h.aiScore >= 70 ? 'fort' : h.aiScore >= 50 ? 'moyen' : 'faible'
@@ -346,7 +378,7 @@ function buildLiveRace(
 
 // ─── Main PMU fetch ───────────────────────────────────────────────────────────
 
-async function fetchPMURaces(today: Date): Promise<LiveRace[] | null> {
+async function fetchPMURaces(today: Date, weights: ModelWeights): Promise<LiveRace[] | null> {
   const ddmmyyyy = toDDMMYYYY(today)
   const todayISO = today.toISOString().slice(0, 10)
 
@@ -377,7 +409,7 @@ async function fetchPMURaces(today: Date): Promise<LiveRace[] | null> {
         partData?.partants ??
         (course as { participants?: unknown[] }).participants ??
         []
-      return buildLiveRace(course, reunion, todayISO, participants)
+      return buildLiveRace(course, reunion, todayISO, participants, weights)
     })
   )
 
@@ -425,7 +457,9 @@ function buildMockLiveRaces(): LiveRace[] {
 
 export async function GET(): Promise<NextResponse<LiveResponse>> {
   const now = new Date()
-  let races = await fetchPMURaces(now)
+  // loadModelWeights est mise en cache Next.js (revalidate 1h) — overhead négligeable
+  const weights = await loadModelWeights()
+  let races = await fetchPMURaces(now, weights)
   const source: 'pmu' | 'mock' = races ? 'pmu' : 'mock'
   if (!races) races = buildMockLiveRaces()
 
