@@ -8,7 +8,6 @@ import {
 } from 'lucide-react'
 import type { LiveResponse, LiveRace, LiveHorse } from '@/types/live'
 import type { RaceType } from '@/types'
-import PushBell from '@/components/ui/PushBell'
 import { saveFavorite, removeFavorite, loadFavorites, pingActive } from '@/app/actions/push'
 
 const POLL_INTERVAL = 20_000
@@ -458,17 +457,14 @@ export function PremiumRacesGrid({ activeType, basePath = '/dashboard-premium', 
           )}
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <PushBell />
-          <button
-            onClick={() => fetchRaces(true)}
-            disabled={refreshing}
-            className="flex items-center gap-1.5 text-xs text-white hover:text-white/80 transition-colors px-3 py-1.5 rounded-lg border border-eq-border hover:border-eq-border-bright bg-eq-card disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
-            Actualiser
-          </button>
-        </div>
+        <button
+          onClick={() => fetchRaces(true)}
+          disabled={refreshing}
+          className="self-start sm:self-auto flex items-center gap-1.5 text-xs text-white hover:text-white/80 transition-colors px-3 py-1.5 rounded-lg border border-eq-border hover:border-eq-border-bright bg-eq-card disabled:opacity-50"
+        >
+          <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+          Actualiser
+        </button>
       </div>
 
       {error && (
