@@ -19,12 +19,12 @@ const STATS = [
 
 const BASE = 'https://mkzkkwqxarnnoamxnzyu.supabase.co/storage/v1/object/public/videos'
 const VIDEOS = [
-  `${BASE}/ssstik.io_@francegalop_1779699846455.mp4`,
-  `${BASE}/ssstik.io_@francegalop_1779699889192.mp4`,
-  `${BASE}/ssstik.io_@francegalop_1779699915277.mp4`,
-  `${BASE}/ssstik.io_@elliotfcx_1779699998794.mp4`,
-  `${BASE}/ssstik.io_@equidia_off_1779700044750.mp4`,
-  `${BASE}/ssstik.io_@equidia_off_1779788461478.mp4`,
+  { src: `${BASE}/ssstik.io_@francegalop_1779699846455.mp4`,  account: '@francegalop' },
+  { src: `${BASE}/ssstik.io_@francegalop_1779699889192.mp4`,  account: '@francegalop' },
+  { src: `${BASE}/ssstik.io_@francegalop_1779699915277.mp4`,  account: '@francegalop' },
+  { src: `${BASE}/ssstik.io_@elliotfcx_1779699998794.mp4`,    account: '@elliotfcx' },
+  { src: `${BASE}/ssstik.io_@equidia_off_1779700044750.mp4`,  account: '@equidia_off' },
+  { src: `${BASE}/ssstik.io_@equidia_off_1779788461478.mp4`,  account: '@equidia_off' },
 ]
 
 const RACE_CARDS = [

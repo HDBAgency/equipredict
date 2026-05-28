@@ -4,7 +4,9 @@ import { useRef, useEffect } from 'react'
 
 const SPEED = 32 // secondes pour un tour complet
 
-export default function VideoCarousel({ videos }: { videos: string[] }) {
+type VideoItem = { src: string; account: string }
+
+export default function VideoCarousel({ videos }: { videos: VideoItem[] }) {
   const ringRef = useRef<HTMLDivElement>(null)
   const angle = useRef(0)
   const isDragging = useRef(false)
@@ -68,9 +70,10 @@ export default function VideoCarousel({ videos }: { videos: string[] }) {
         onMouseDown={(e) => { isDragging.current = true; lastX.current = e.clientX }}
         onTouchStart={(e) => { isDragging.current = true; lastX.current = e.touches[0].clientX }}
       >
-        {videos.map((src, i) => (
+        {videos.map(({ src, account }, i) => (
           <div key={i} className="video-carousel-card" style={{ '--i': i, '--n': n } as React.CSSProperties}>
             <video src={src} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <p className="absolute bottom-2 left-0 right-0 text-center text-gray-500 text-xs">{account}</p>
           </div>
         ))}
       </div>
