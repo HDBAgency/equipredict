@@ -58,7 +58,7 @@ export default function PushBell({ plan }: { plan: string }) {
       onClick={toggle}
       disabled={isPending}
       title={state === 'subscribed' ? 'Désactiver les notifications' : 'Activer les notifications courses'}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
+      className={`lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
         state === 'subscribed'
           ? 'bg-eq-green/15 border-eq-green/30 text-eq-green'
           : 'bg-eq-card border-eq-border text-eq-muted hover:border-eq-border-bright hover:text-eq-text'
