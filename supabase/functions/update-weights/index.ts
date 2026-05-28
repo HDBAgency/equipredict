@@ -252,6 +252,27 @@ Deno.serve(async () => {
     weights_snapshot:   weights,
   })
 
+  // 10. Déclencher l'entraînement XGBoost (fire-and-forget, non bloquant)
+  const xgbUrl = Deno.env.get('XGBOOST_SERVICE_URL')
+  const xgbSecret = Deno.env.get('TRAIN_SECRET') ?? ''
+  let xgbTriggered = false
+  if (xgbUrl) {
+    try {
+      const ctrl  = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 5000)
+      const r = await fetch(`${xgbUrl}/train`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Train-Secret': xgbSecret },
+        body:    JSON.stringify({ days: 90 }),
+        signal:  ctrl.signal,
+      })
+      clearTimeout(timer)
+      xgbTriggered = r.ok
+    } catch {
+      xgbTriggered = false  // service hors ligne, pas critique
+    }
+  }
+
   return new Response(JSON.stringify({
     updated:          true,
     epochs:           EPOCHS,
@@ -263,5 +284,6 @@ Deno.serve(async () => {
     val_top1:         `${Math.round(valMetrics.top1 * 100)}%`,
     val_top3:         `${Math.round(valMetrics.top3 * 100)}%`,
     new_weights:      Object.fromEntries(KEYS.map(k => [k, Math.round(weights[k] * 1000) / 1000])),
+    xgboost_triggered: xgbTriggered,
   }), { headers: { 'Content-Type': 'application/json' } })
 })

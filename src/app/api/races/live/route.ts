@@ -331,10 +331,17 @@ function buildLiveRace(
   const racecourse = toTitle(hippoRaw.replace(/^HIPPODROME DE /i, ''))
 
   // Parse horses (with temp scoring fields)
+  type RawFeatures = {
+    raw_form: number; raw_odds_rank: number; raw_consist: number; raw_placement: number
+    raw_mvt: number; raw_age: number; raw_earnings: number
+    raw_jockey_wr: number; raw_trainer_wr: number
+    raw_weight_penalty: number; raw_form_x_signal: number; raw_jockey_x_trainer: number
+  }
   type RichHorse = LiveHorse & {
     _formScore: number; _winRate: number; _placeRate: number
     _careerRaces: number; _careerEarnings: number
     _age: number; _trainer: string; _weight: number
+    _rawFeatures: RawFeatures
   }
   const horses = participants.map((p, i) => parseParticipant(p, raceId, i)) as RichHorse[]
 
@@ -426,6 +433,15 @@ function buildLiveRace(
 
     h.aiScore = Math.round(Math.min(100, Math.max(0, raw * 10)))
     h.confidenceLevel = h.aiScore >= 70 ? 'fort' : h.aiScore >= 50 ? 'moyen' : 'faible'
+
+    // Stocker les features brutes pour le service XGBoost
+    ;(h as RichHorse)._rawFeatures = {
+      raw_form: form, raw_odds_rank: oddsRank, raw_consist: consist,
+      raw_placement: placement, raw_mvt: mvt, raw_age: age, raw_earnings: earnings,
+      raw_jockey_wr: jockeyWR, raw_trainer_wr: trainerWR,
+      raw_weight_penalty: weightPenalty, raw_form_x_signal: formXSignal,
+      raw_jockey_x_trainer: jockeyXTrainer,
+    }
   })
 
   // ── Probabilités calibrées : 40% softmax IA + 60% signal marché ─────────────
@@ -564,6 +580,76 @@ function buildMockLiveRaces(): LiveRace[] {
   })
 }
 
+// ─── XGBoost blend ───────────────────────────────────────────────────────────
+// Appelle le microservice Python pour chaque course (un appel par course),
+// blende 65% XGBoost + 35% linéaire.
+// Fallback gracieux : si le service est hors ligne, score linéaire inchangé.
+
+type RawFeatures = {
+  raw_form: number; raw_odds_rank: number; raw_consist: number; raw_placement: number
+  raw_mvt: number; raw_age: number; raw_earnings: number
+  raw_jockey_wr: number; raw_trainer_wr: number
+  raw_weight_penalty: number; raw_form_x_signal: number; raw_jockey_x_trainer: number
+}
+
+async function applyXGBoostScores(races: LiveRace[]): Promise<LiveRace[]> {
+  const serviceUrl = process.env.XGBOOST_SERVICE_URL
+  if (!serviceUrl) return races
+
+  const racePromises = races.map(async race => {
+    const richHorses = (race.horses as Array<LiveHorse & { _rawFeatures?: RawFeatures }>)
+      .filter(h => h.odds < 90 && h._rawFeatures)
+
+    if (richHorses.length < 2) return race
+
+    const payload = {
+      horses: richHorses.map(h => ({ id: h.id, ...h._rawFeatures! })),
+    }
+
+    try {
+      const ctrl  = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 3000)  // timeout 3s
+      const res   = await fetch(`${serviceUrl}/predict`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+        signal:  ctrl.signal,
+      })
+      clearTimeout(timer)
+      if (!res.ok) return race
+
+      const data = await res.json() as { scores: Array<{ id: string; xgb_score: number }> }
+      const xgbMap = new Map(data.scores.map(s => [s.id, s.xgb_score]))
+
+      // Blend : 65% XGBoost + 35% score linéaire
+      const updatedHorses = race.horses.map(h => {
+        const xgb = xgbMap.get(h.id)
+        if (xgb === undefined) return h
+        const blended = Math.round(0.65 * xgb + 0.35 * h.aiScore)
+        return {
+          ...h,
+          aiScore: blended,
+          confidenceLevel: (blended >= 70 ? 'fort' : blended >= 50 ? 'moyen' : 'faible') as LiveHorse['confidenceLevel'],
+        }
+      })
+
+      // Recalculer isRecommended après blend
+      const bestBlended = updatedHorses
+        .filter(h => h.odds < 90)
+        .reduce<LiveHorse | null>((a, b) => !a || b.aiScore > a.aiScore ? b : a, null)
+
+      return {
+        ...race,
+        horses: updatedHorses.map(h => ({ ...h, isRecommended: h.id === bestBlended?.id })),
+      }
+    } catch {
+      return race  // fallback silencieux
+    }
+  })
+
+  return Promise.all(racePromises)
+}
+
 // ─── Route handler ─────────────────────────────────────────────────────────────
 
 export async function GET(): Promise<NextResponse<LiveResponse>> {
@@ -576,6 +662,9 @@ export async function GET(): Promise<NextResponse<LiveResponse>> {
   let races = await fetchPMURaces(now, weights, jockeys, trainers)
   const source: 'pmu' | 'mock' = races ? 'pmu' : 'mock'
   if (!races) races = buildMockLiveRaces()
+
+  // XGBoost blend — 65% XGB + 35% linéaire (no-op si XGBOOST_SERVICE_URL absent)
+  races = await applyXGBoostScores(races)
 
   // Enrichit avec la météo réelle Open-Meteo (parallèle, dédupliqué par hippodrome)
   const uniqueCourses = [...new Set(races.map(r => r.racecourse))]
