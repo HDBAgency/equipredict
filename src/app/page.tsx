@@ -130,7 +130,7 @@ export default function HomePage() {
           alt="PMU"
           style={{ height: '700px', width: 'auto', position: 'absolute', top: 'calc(50% + 100px)', left: '50%', transform: 'translate(-50%, -50%)' }}
         />
-        <p className="absolute text-white text-xs text-center" style={{ top: 'calc(50% + 455px)', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>
+        <p className="absolute text-gray-600 text-xs text-center" style={{ top: 'calc(50% + 455px)', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>
           Application PMU
         </p>
         <RaceCardUI {...RACE_CARDS[0]} className="absolute animate-float-left" style={{ width: '380px', bottom: '0px', left: '250px' } as React.CSSProperties} />
