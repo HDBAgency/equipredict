@@ -4,9 +4,19 @@ import { useEffect, useState } from 'react'
 import { Bell, BellOff, Loader2 } from 'lucide-react'
 import { subscribePush, unsubscribePush } from '@/app/actions/push'
 
+function swReady(): Promise<ServiceWorkerRegistration> {
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('SW timeout — recharge la page')), 8000)
+    ),
+  ]) as Promise<ServiceWorkerRegistration>
+}
+
 export default function PushBell() {
   const [state, setState] = useState<'loading' | 'denied' | 'subscribed' | 'unsubscribed'>('loading')
   const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
 
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -25,9 +35,10 @@ export default function PushBell() {
   async function toggle() {
     if (busy) return
     setBusy(true)
+    setErr('')
     try {
       if (state === 'subscribed') {
-        const reg = await navigator.serviceWorker.ready
+        const reg = await swReady()
         const sub = await reg.pushManager.getSubscription()
         await sub?.unsubscribe()
         await unsubscribePush()
@@ -35,11 +46,10 @@ export default function PushBell() {
         return
       }
 
-      // iOS exige que requestPermission soit appelé directement depuis le geste
       const permission = await Notification.requestPermission()
-      if (permission !== 'granted') { setState('denied'); return }
+      if (permission !== 'granted') { setErr('Permission refusée'); setState('denied'); return }
 
-      const reg = await navigator.serviceWorker.ready
+      const reg = await swReady()
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
@@ -47,32 +57,36 @@ export default function PushBell() {
 
       const json = sub.toJSON() as { endpoint: string; keys: { auth: string; p256dh: string } }
       const result = await subscribePush(json)
-      if (!result?.error) setState('subscribed')
-    } catch (err) {
-      console.error('PushBell error', err)
+      if (result?.error) { setErr(result.error); return }
+      setState('subscribed')
+    } catch (err: unknown) {
+      setErr(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <button
-      onClick={toggle}
-      disabled={busy}
-      title={state === 'subscribed' ? 'Désactiver les notifications' : 'Activer les notifications courses'}
-      className={`lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
-        state === 'subscribed'
-          ? 'bg-eq-green/15 border-eq-green/30 text-eq-green'
-          : 'bg-eq-card border-eq-border text-eq-muted hover:border-eq-border-bright hover:text-eq-text'
-      }`}
-    >
-      {busy
-        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        : state === 'subscribed'
-          ? <><Bell className="w-3.5 h-3.5" /> Notifs actives</>
-          : <><BellOff className="w-3.5 h-3.5" /> Notifier</>
-      }
-    </button>
+    <div className="lg:hidden flex flex-col items-end gap-1">
+      <button
+        onClick={toggle}
+        disabled={busy}
+        title={state === 'subscribed' ? 'Désactiver les notifications' : 'Activer les notifications courses'}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
+          state === 'subscribed'
+            ? 'bg-eq-green/15 border-eq-green/30 text-eq-green'
+            : 'bg-eq-card border-eq-border text-eq-muted hover:border-eq-border-bright hover:text-eq-text'
+        }`}
+      >
+        {busy
+          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          : state === 'subscribed'
+            ? <><Bell className="w-3.5 h-3.5" /> Notifs actives</>
+            : <><BellOff className="w-3.5 h-3.5" /> Notifier</>
+        }
+      </button>
+      {err && <p className="text-[10px] text-red-400 max-w-[180px] text-right">{err}</p>}
+    </div>
   )
 }
 
