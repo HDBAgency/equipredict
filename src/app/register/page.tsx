@@ -59,7 +59,8 @@ function RegisterForm() {
       })
       if (signUpError) throw signUpError
       setSuccess(true)
-      setTimeout(() => router.push('/pricing'), 1500)
+      const redirect = plan === 'free' ? '/dashboard' : '/pricing'
+      setTimeout(() => router.push(redirect), 1500)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur lors de l'inscription")
     } finally {
@@ -76,9 +77,11 @@ function RegisterForm() {
           </div>
           <h1 className="text-2xl font-black text-eq-text mb-2">Compte créé !</h1>
           <p className="text-eq-muted text-sm mb-2">
-            Plan <span className="text-eq-green font-semibold">{PLAN_LABELS[plan] ?? plan}</span> activé.
+            Bienvenue sur EquiPredict.
           </p>
-          <p className="text-eq-muted text-xs mb-6">Redirection vers les tarifs…</p>
+          <p className="text-eq-muted text-xs mb-6">
+            {plan === 'free' ? 'Redirection vers le tableau de bord…' : 'Redirection vers les tarifs…'}
+          </p>
           <div className="w-5 h-5 rounded-full border-2 border-eq-green border-t-transparent animate-spin mx-auto" />
         </div>
       </div>
