@@ -1,7 +1,7 @@
 """
 XGBoost ranking model for horse race prediction.
-Uses XGBRanker with rank:pairwise objective — the correct approach
-for an ordinal ranking problem (finish position).
+Uses XGBRanker with rank:pairwise — optimal for ordinal ranking (finish position).
+Supabase access via httpx + PostgREST (no supabase-py dependency).
 """
 
 from __future__ import annotations
@@ -11,60 +11,78 @@ import logging
 from pathlib import Path
 from datetime import datetime, timedelta
 
+import httpx
 import numpy as np
 import pandas as pd
 import xgboost as xgb
-from supabase import create_client
 
 logger = logging.getLogger(__name__)
 
 MODEL_PATH = Path("xgb_model.ubj")
 
-# ─── 12 facteurs — identiques à ceux de route.ts et collect-results ──────────
 FEATURES: list[str] = [
-    "raw_form",           # forme récente (musique PMU)
-    "raw_odds_rank",      # rang marché (signal cotes)
-    "raw_consist",        # taux de victoires carrière
-    "raw_placement",      # taux de placement carrière
-    "raw_mvt",            # mouvement de cote (insider signal)
-    "raw_age",            # âge optimal par discipline
-    "raw_earnings",       # gains carrière normalisés (classe)
-    "raw_jockey_wr",      # win rate jockey (90 jours glissants)
-    "raw_trainer_wr",     # win rate entraîneur (90 jours glissants)
-    "raw_weight_penalty", # poids de monte / handicap
-    "raw_form_x_signal",  # interaction forme × marché
-    "raw_jockey_x_trainer", # interaction jockey × trainer
+    "raw_form",
+    "raw_odds_rank",
+    "raw_consist",
+    "raw_placement",
+    "raw_mvt",
+    "raw_age",
+    "raw_earnings",
+    "raw_jockey_wr",
+    "raw_trainer_wr",
+    "raw_weight_penalty",
+    "raw_form_x_signal",
+    "raw_jockey_x_trainer",
 ]
 
-NEUTRAL = 5.0  # valeur neutre (données manquantes)
+NEUTRAL = 5.0
 
 
-def _get_supabase():
-    url = os.environ["SUPABASE_URL"]
-    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-    return create_client(url, key)
+# ─── Supabase REST (PostgREST) via httpx ─────────────────────────────────────
+
+def _supabase_select(table: str, columns: list[str], filters: dict[str, str] | None = None) -> list[dict]:
+    """
+    Appel GET PostgREST.
+    filters = {"race_date": "gte.2025-01-01"} → ?race_date=gte.2025-01-01
+    """
+    url     = os.environ["SUPABASE_URL"].rstrip("/")
+    key     = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+    headers = {
+        "apikey":        key,
+        "Authorization": f"Bearer {key}",
+    }
+    params: dict[str, str] = {"select": ",".join(columns)}
+    if filters:
+        params.update(filters)
+
+    with httpx.Client(timeout=30.0) as client:
+        resp = client.get(f"{url}/rest/v1/{table}", headers=headers, params=params)
+
+    resp.raise_for_status()
+    return resp.json()
 
 
 # ─── Collecte des données ─────────────────────────────────────────────────────
 
 def fetch_training_data(days: int = 90) -> pd.DataFrame:
     since = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-    supabase = _get_supabase()
+    cols  = ["race_id", "finish_pos"] + FEATURES
 
-    cols = ["race_id", "finish_pos"] + FEATURES
-    result = (
-        supabase.table("race_outcomes")
-        .select(",".join(cols))
-        .gte("race_date", since)
-        .execute()
-    )
-
-    if not result.data:
+    try:
+        rows = _supabase_select(
+            table="race_outcomes",
+            columns=cols,
+            filters={"race_date": f"gte.{since}"},
+        )
+    except Exception as exc:
+        logger.error("Supabase fetch failed: %s", exc)
         return pd.DataFrame(columns=cols)
 
-    df = pd.DataFrame(result.data)
+    if not rows:
+        return pd.DataFrame(columns=cols)
 
-    # Remplir les colonnes manquantes (avant migration complète)
+    df = pd.DataFrame(rows)
+
     for f in FEATURES:
         if f not in df.columns:
             df[f] = NEUTRAL
@@ -74,79 +92,54 @@ def fetch_training_data(days: int = 90) -> pd.DataFrame:
     df["finish_pos"] = pd.to_numeric(df["finish_pos"], errors="coerce")
     df = df.dropna(subset=["race_id", "finish_pos"])
     df["finish_pos"] = df["finish_pos"].astype(int)
-
     return df
 
 
 # ─── Préparation pour XGBRanker ───────────────────────────────────────────────
 
-def _prepare_ranking_data(
-    df: pd.DataFrame,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[None, None, None]:
-    """
-    XGBRanker attend :
-      - X      : feature matrix (n_samples × n_features)
-      - y      : relevance labels (entiers, plus haut = meilleur)
-      - groups : taille de chaque groupe (course)
-
-    Données triées par race_id (obligatoire pour les groupes).
-    """
-    # Garder seulement les courses avec ≥ 3 partants et un gagnant
-    def valid_race(g: pd.DataFrame) -> bool:
+def _prepare(df: pd.DataFrame):
+    def valid(g: pd.DataFrame) -> bool:
         return len(g) >= 3 and (g["finish_pos"] == 1).any()
 
-    df = df.groupby("race_id", group_keys=False).filter(valid_race)
+    df = df.groupby("race_id", group_keys=False).filter(valid)
     if df.empty:
         return None, None, None
 
     df = df.sort_values("race_id").reset_index(drop=True)
-
-    # Relevance = max_pos_dans_la_course - finish_pos + 1
-    # → gagnant (pos=1) a la plus haute valeur dans son groupe
-    df["max_pos"] = df.groupby("race_id")["finish_pos"].transform("max")
+    df["max_pos"]   = df.groupby("race_id")["finish_pos"].transform("max")
     df["relevance"] = (df["max_pos"] - df["finish_pos"] + 1).astype(int)
 
-    X = df[FEATURES].values.astype(np.float32)
-    y = df["relevance"].values.astype(int)
+    X      = df[FEATURES].values.astype(np.float32)
+    y      = df["relevance"].values.astype(int)
     groups = df.groupby("race_id", sort=False).size().values
-
     return X, y, groups
 
 
 # ─── Entraînement ─────────────────────────────────────────────────────────────
 
 def train(days: int = 90) -> dict:
-    logger.info("Fetching training data (last %d days)…", days)
+    logger.info("Fetching %d days of race data…", days)
     df = fetch_training_data(days)
 
     if len(df) < 200:
-        return {
-            "success": False,
-            "reason": "insufficient data",
-            "rows": len(df),
-        }
+        return {"success": False, "reason": "insufficient_data", "rows": len(df)}
 
-    X, y, groups = _prepare_ranking_data(df)
-    if X is None:
-        return {"success": False, "reason": "data preparation failed"}
+    result = _prepare(df)
+    if result[0] is None:
+        return {"success": False, "reason": "preparation_failed"}
 
-    n_races = len(groups)
-    n_train = max(1, int(n_races * 0.70))
+    X, y, groups = result
+    n_races  = len(groups)
+    n_train  = max(1, int(n_races * 0.70))
+    cum      = np.cumsum(groups)
+    split    = int(cum[n_train - 1])
 
-    # Split train / validation par course (70/30)
-    cum = np.cumsum(groups)
-    split_idx = int(cum[n_train - 1])
+    X_tr, X_val = X[:split],  X[split:]
+    y_tr, y_val = y[:split],  y[split:]
+    g_tr, g_val = groups[:n_train], groups[n_train:]
 
-    X_train, X_val = X[:split_idx], X[split_idx:]
-    y_train, y_val = y[:split_idx], y[split_idx:]
-    g_train,  g_val  = groups[:n_train], groups[n_train:]
+    logger.info("Training on %d races, validating on %d…", n_train, n_races - n_train)
 
-    logger.info(
-        "Training XGBRanker on %d races (%d horses), validating on %d races…",
-        n_train, len(X_train), n_races - n_train,
-    )
-
-    # early_stopping_rounds dans le constructeur (API XGBoost 2.x)
     model = xgb.XGBRanker(
         objective="rank:pairwise",
         n_estimators=400,
@@ -162,105 +155,77 @@ def train(days: int = 90) -> dict:
         early_stopping_rounds=40,
     )
 
-    # Validation set pour early stopping (XGBoost 2.x : eval_group dans fit)
     if len(g_val) > 0:
         model.fit(
-            X_train, y_train,
-            group=g_train,
+            X_tr, y_tr,
+            group=g_tr,
             eval_set=[(X_val, y_val)],
             eval_group=[g_val],
             verbose=False,
         )
     else:
-        model.fit(X_train, y_train, group=g_train, verbose=False)
+        model.fit(X_tr, y_tr, group=g_tr, verbose=False)
 
     model.save_model(str(MODEL_PATH))
-    logger.info("Model saved → %s (best iter: %d)", MODEL_PATH, model.best_iteration)
+    best_iter = getattr(model, "best_iteration", model.n_estimators)
+    logger.info("Model saved (best_iteration=%d)", best_iter)
 
-    # Feature importances
-    importances = {
-        f: round(float(v), 4)
-        for f, v in zip(FEATURES, model.feature_importances_)
-    }
-
-    train_top1, train_top3 = _accuracy(X_train, y_train, g_train, model)
-    val_top1,   val_top3   = _accuracy(X_val,   y_val,   g_val,   model)
+    fi = {f: round(float(v), 4) for f, v in zip(FEATURES, model.feature_importances_)}
+    tr_top1, tr_top3 = _accuracy(X_tr,  y_tr,  g_tr,  model)
+    va_top1, va_top3 = _accuracy(X_val, y_val, g_val, model) if len(g_val) > 0 else (0.0, 0.0)
 
     return {
-        "success": True,
-        "n_estimators": model.best_iteration + 1,
-        "train_races": n_train,
-        "val_races": n_races - n_train,
-        "train_top1": round(train_top1, 3),
-        "train_top3": round(train_top3, 3),
-        "val_top1": round(val_top1, 3),
-        "val_top3": round(val_top3, 3),
-        "feature_importances": importances,
+        "success":             True,
+        "n_estimators":        best_iter,
+        "train_races":         n_train,
+        "val_races":           n_races - n_train,
+        "train_top1":          round(tr_top1, 3),
+        "train_top3":          round(tr_top3, 3),
+        "val_top1":            round(va_top1, 3),
+        "val_top3":            round(va_top3, 3),
+        "feature_importances": fi,
     }
 
 
-# ─── Métriques top-k ──────────────────────────────────────────────────────────
+# ─── Métriques ────────────────────────────────────────────────────────────────
 
-def _accuracy(
-    X: np.ndarray,
-    y: np.ndarray,
-    groups: np.ndarray,
-    model: xgb.XGBRanker,
-) -> tuple[float, float]:
+def _accuracy(X: np.ndarray, y: np.ndarray, groups: np.ndarray, model: xgb.XGBRanker):
     scores = model.predict(X)
-    top1_hits = top3_hits = total = 0
+    top1 = top3 = total = 0
     idx = 0
     for g in groups:
-        s = scores[idx : idx + g]
-        r = y[idx : idx + g]
-        order = np.argsort(-s)       # indices triés par score décroissant
-        best  = int(np.argmax(r))    # indice du vrai gagnant (relevance max)
-
-        if order[0] == best:
-            top1_hits += 1
-        if best in order[:3]:
-            top3_hits += 1
+        s     = scores[idx: idx + g]
+        r     = y[idx: idx + g]
+        order = np.argsort(-s)
+        best  = int(np.argmax(r))
+        if order[0] == best:         top1 += 1
+        if best in order[:3]:        top3 += 1
         total += 1
-        idx += g
-
-    return (
-        top1_hits / total if total else 0.0,
-        top3_hits / total if total else 0.0,
-    )
+        idx   += g
+    return (top1 / total if total else 0.0, top3 / total if total else 0.0)
 
 
 # ─── Prédiction ───────────────────────────────────────────────────────────────
 
-def _load_model() -> xgb.XGBRanker | None:
-    if MODEL_PATH.exists():
-        m = xgb.XGBRanker()
-        m.load_model(str(MODEL_PATH))
-        return m
-    return None
+def load_model() -> xgb.XGBRanker | None:
+    if not MODEL_PATH.exists():
+        return None
+    m = xgb.XGBRanker()
+    m.load_model(str(MODEL_PATH))
+    return m
 
 
 def predict(horse_features: list[dict]) -> list[float]:
-    """
-    Retourne des scores 0-100 (plus haut = plus susceptible de gagner).
-    Fallback sur la moyenne uniforme si le modèle n'est pas encore entraîné.
-    """
     if not horse_features:
         return []
 
-    model = _load_model()
-
-    X = np.array(
-        [[h.get(f, NEUTRAL) for f in FEATURES] for h in horse_features],
-        dtype=np.float32,
-    )
+    model = load_model()
+    X     = np.array([[h.get(f, NEUTRAL) for f in FEATURES] for h in horse_features], dtype=np.float32)
 
     if model is None:
-        # Pas encore de modèle : score uniforme (le fallback linéaire de route.ts prend le relais)
         return [50.0] * len(horse_features)
 
     raw = model.predict(X)
-
-    # Normalisation 0-100 par rapport au champ courant (une course à la fois)
     lo, hi = float(raw.min()), float(raw.max())
     if hi > lo:
         return [round((float(v) - lo) / (hi - lo) * 100, 1) for v in raw]
@@ -268,7 +233,8 @@ def predict(horse_features: list[dict]) -> list[float]:
 
 
 def feature_importances() -> dict | None:
-    m = _load_model()
+    m = load_model()
     if m is None:
         return None
-    return {f: round(float(v), 4) for f, v in zip(FEATURES, m.feature_importances_)}
+    fi = {f: round(float(v), 4) for f, v in zip(FEATURES, m.feature_importances_)}
+    return dict(sorted(fi.items(), key=lambda x: x[1], reverse=True))

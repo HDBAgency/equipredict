@@ -2,10 +2,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    g++ \
-    libgomp1 \
+# libgomp1 requis par XGBoost (OpenMP)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

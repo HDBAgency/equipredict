@@ -14,6 +14,7 @@ from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel, Field
 
 import model as xgb_model
+from model import load_model, MODEL_PATH
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,11 +38,11 @@ def require_train_secret(key: str | None = Security(api_key_header)) -> str:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    m = xgb_model._load_model()
+    m = load_model()
     if m is not None:
-        logger.info("XGBoost model loaded from %s", xgb_model.MODEL_PATH)
+        logger.info("XGBoost model loaded from %s", MODEL_PATH)
     else:
-        logger.warning("No trained model found — /predict will return neutral scores until /train is called")
+        logger.warning("No trained model found — /predict returns neutral scores until /train is called")
     yield
 
 
@@ -84,7 +85,7 @@ class TrainRequest(BaseModel):
 def health():
     return {
         "status": "ok",
-        "model_ready": xgb_model.MODEL_PATH.exists(),
+        "model_ready": MODEL_PATH.exists(),
         "features": xgb_model.FEATURES,
     }
 
@@ -125,7 +126,7 @@ def predict_endpoint(req: PredictRequest):
             {"id": h.id, "xgb_score": scores[i]}
             for i, h in enumerate(req.horses)
         ],
-        "model_ready": xgb_model.MODEL_PATH.exists(),
+        "model_ready": MODEL_PATH.exists(),
     }
 
 
@@ -134,6 +135,4 @@ def feature_importance_endpoint():
     fi = xgb_model.feature_importances()
     if fi is None:
         return {"available": False, "message": "Model not trained yet"}
-    # Tri par importance décroissante
-    sorted_fi = dict(sorted(fi.items(), key=lambda x: x[1], reverse=True))
-    return {"available": True, "importances": sorted_fi}
+    return {"available": True, "importances": fi}
