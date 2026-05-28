@@ -459,7 +459,7 @@ export function PremiumRacesGrid({ activeType, basePath = '/dashboard-premium', 
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <PushBell plan={plan} />
+          <PushBell />
           <button
             onClick={() => fetchRaces(true)}
             disabled={refreshing}

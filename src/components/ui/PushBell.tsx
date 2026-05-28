@@ -4,8 +4,8 @@ import { useEffect, useState, useTransition } from 'react'
 import { Bell, BellOff } from 'lucide-react'
 import { subscribePush, unsubscribePush } from '@/app/actions/push'
 
-export default function PushBell({ plan }: { plan: string }) {
-  const [state, setState] = useState<'unknown' | 'denied' | 'subscribed' | 'unsubscribed'>('unknown')
+export default function PushBell() {
+  const [state, setState] = useState<'loading' | 'denied' | 'subscribed' | 'unsubscribed'>('loading')
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -22,8 +22,7 @@ export default function PushBell({ plan }: { plan: string }) {
     }).catch(() => setState('unsubscribed'))
   }, [])
 
-  if (plan !== 'premium' && plan !== 'pro') return null
-  if (state === 'denied') return null
+  if (state === 'denied' || state === 'loading') return null
 
   async function toggle() {
     startTransition(async () => {
