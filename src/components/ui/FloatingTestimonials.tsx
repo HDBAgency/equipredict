@@ -2,15 +2,15 @@ import { Star } from 'lucide-react'
 
 const TESTIMONIALS = [
   // Rangée du haut (4 cartes)
-  { name: 'Thomas R.',      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',   role: 'Abonné Premium',  text: "Je suis les prédictions depuis 3 mois. Le niveau de confiance FORT est vraiment fiable — 73% de succès de mon côté. Je ne mise plus sans consulter EquiPredict avant chaque course.", stars: 5 },
-  { name: 'Marie-Claire D.',avatar: 'https://randomuser.me/api/portraits/women/44.jpg', role: 'Abonnée Pro',     text: "Les analyses de terrain sont bluffantes. Surtout sur l'obstacle sous la pluie — EquiPredict identifie les spécialistes parfaitement. Un outil indispensable pour les passionnés.", stars: 5 },
-  { name: 'Julien B.',      avatar: 'https://randomuser.me/api/portraits/men/67.jpg',   role: 'Abonné Premium',  text: "Interface propre, prédictions pertinentes, justification claire. Enfin une vraie IA pour le PMU ! J'ai gagné en régularité depuis que j'utilise l'application chaque semaine.", stars: 4 },
-  { name: 'Antoine L.',     avatar: 'https://randomuser.me/api/portraits/men/54.jpg',   role: 'Abonné Pro',      text: "Le suivi des cotes en temps réel change tout. Quand EquiPredict détecte une chute de cote sur un favori IA, c'est presque toujours bon signe. Résultats bluffants sur le quinté.", stars: 5 },
+  { name: 'Sharky',   role: 'Abonné Premium',  text: "Je suis les prédictions depuis 3 mois. Le niveau de confiance FORT est vraiment fiable — 73% de succès de mon côté. Je ne mise plus sans consulter EquiPredict avant chaque course.", stars: 5 },
+  { name: 'Evan',     role: 'Abonné Pro',      text: "Les analyses de terrain sont bluffantes. Surtout sur l'obstacle sous la pluie — EquiPredict identifie les spécialistes parfaitement. Un outil indispensable pour les passionnés.", stars: 5 },
+  { name: 'Pierre',   role: 'Abonné Premium',  text: "Interface propre, prédictions pertinentes, justification claire. Enfin une vraie IA pour le PMU ! J'ai gagné en régularité depuis que j'utilise l'application chaque semaine.", stars: 4 },
+  { name: 'Alexis',   role: 'Abonné Pro',      text: "Le suivi des cotes en temps réel change tout. Quand EquiPredict détecte une chute de cote sur un favori IA, c'est presque toujours bon signe. Résultats bluffants sur le quinté.", stars: 5 },
   // Rangée du bas (4 cartes)
-  { name: 'Sophie M.',      avatar: 'https://randomuser.me/api/portraits/women/68.jpg', role: 'Abonnée Pro',     text: "Les statistiques avancées du plan Pro sont une mine d'or. Je compare les entraîneurs, les hippodromes, les conditions de terrain — tout y est. Mon taux de réussite a bondi de 20% en 6 semaines.", stars: 5 },
-  { name: 'Rémi V.',        avatar: 'https://randomuser.me/api/portraits/men/12.jpg',   role: 'Abonné Premium',  text: "J'étais sceptique au départ mais les résultats parlent d'eux-mêmes. Sur les courses de trot à Vincennes, EquiPredict m'a sorti des gagnants que je n'aurais jamais joués seul.", stars: 5 },
-  { name: 'Isabelle F.',    avatar: 'https://randomuser.me/api/portraits/women/21.jpg', role: 'Abonnée Premium', text: "Simple, rapide, efficace. En 2 minutes j'ai mon top 3 pour la journée avec les explications. Je recommande à tous mes amis passionnés de courses.", stars: 4 },
-  { name: 'Nathalie B.',    avatar: 'https://randomuser.me/api/portraits/women/33.jpg', role: 'Abonnée Premium', text: "Je n'y connaissais rien aux courses hippiques au départ. EquiPredict m'a permis de comprendre les critères clés et de miser intelligemment. Maintenant je suis accro !", stars: 4 },
+  { name: 'Elisa',    role: 'Abonnée Pro',     text: "Les statistiques avancées du plan Pro sont une mine d'or. Je compare les entraîneurs, les hippodromes, les conditions de terrain — tout y est. Mon taux de réussite a bondi de 20% en 6 semaines.", stars: 5 },
+  { name: 'Latot03',  role: 'Abonné Premium',  text: "J'étais sceptique au départ mais les résultats parlent d'eux-mêmes. Sur les courses de trot à Vincennes, EquiPredict m'a sorti des gagnants que je n'aurais jamais joués seul.", stars: 5 },
+  { name: 'Théo',     role: 'Abonné Premium',  text: "Simple, rapide, efficace. En 2 minutes j'ai mon top 3 pour la journée avec les explications. Je recommande à tous mes amis passionnés de courses.", stars: 4 },
+  { name: 'Le T.',    role: 'Abonné Premium',  text: "Je n'y connaissais rien aux courses hippiques au départ. EquiPredict m'a permis de comprendre les critères clés et de miser intelligemment. Maintenant je suis accro !", stars: 4 },
 ]
 
 type Cfg = {
@@ -38,7 +38,11 @@ const LAYOUT: Cfg[] = [
   { top: 440, right: '0%',  width: 304, rotate: -3,  dur: 4.7, delay: 1.7, z: 2 },
 ]
 
-function Card({ name, avatar, role, text, stars }: typeof TESTIMONIALS[0]) {
+function getInitials(name: string) {
+  return name.trim().charAt(0).toUpperCase()
+}
+
+function Card({ name, role, text, stars }: typeof TESTIMONIALS[0]) {
   return (
     <div className="bg-black/55 border border-white/10 rounded-2xl p-4 sm:p-6 backdrop-blur-sm">
       <div className="flex items-center gap-1 mb-4">
@@ -48,7 +52,9 @@ function Card({ name, avatar, role, text, stars }: typeof TESTIMONIALS[0]) {
       </div>
       <p className="text-white text-sm leading-relaxed mb-5">&ldquo;{text}&rdquo;</p>
       <div className="flex items-center gap-3">
-        <img src={avatar} alt={name} className="w-10 h-10 rounded-full object-cover border-2 border-white/20 flex-shrink-0" />
+        <div className="w-10 h-10 rounded-full border-2 border-white/20 flex-shrink-0 flex items-center justify-center bg-eq-green/20 text-eq-green font-bold text-sm">
+          {getInitials(name)}
+        </div>
         <div>
           <div className="font-semibold text-sm text-white">{name}</div>
           <div className="text-xs text-eq-green">{role}</div>
