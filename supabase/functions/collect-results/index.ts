@@ -1,23 +1,53 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-const SERVICE_ROLE  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const PMU_BASE = 'https://online.turfinfo.api.pmu.fr/rest/client/61/programme'
+const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const PMU_BASE     = 'https://online.turfinfo.api.pmu.fr/rest/client/61/programme'
 
 function pad(n: number) { return String(n).padStart(2, '0') }
 function toDDMMYYYY(d: Date) {
   return `${pad(d.getDate())}${pad(d.getMonth() + 1)}${d.getFullYear()}`
 }
 
+// Transforme un nom PMU en titre (majuscule initiale) pour correspondre au format route.ts
+function toTitle(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/(?:^|[\s-])\S/g, c => c.toUpperCase())
+    .trim()
+}
+
+// Convertit un win_rate (0–100%) en score 0–10
+// Calibré pour les jockeys/entraîneurs français :
+//   5% → 2.5, 10% → 5, 15% → 7.5, 20%+ → 10
+function winRateToScore(winRate: number, minRaces: number, actualRaces: number): number {
+  if (actualRaces < minRaces) return 5.0  // pas assez de données → neutre
+  return Math.min(10, winRate * 0.5)
+}
+
 Deno.serve(async () => {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE)
 
-  const today = new Date()
-  const dateStr = toDDMMYYYY(today)
+  const today    = new Date()
+  const dateStr  = toDDMMYYYY(today)
   const raceDate = today.toISOString().slice(0, 10)
 
-  // Récupérer le programme PMU du jour
-  let programme: any
+  // ─── 1. Charger les stats jockey/trainer AVANT traitement ────────────────────
+  //    (basées sur données historiques — avant aujourd'hui)
+  //    Utilisées pour calculer raw_jockey_wr et raw_trainer_wr pour les courses d'aujourd'hui
+  const [{ data: jockeyData }, { data: trainerData }] = await Promise.all([
+    supabase.from('jockey_stats').select('jockey_name, win_rate, total_races'),
+    supabase.from('trainer_stats').select('trainer_name, win_rate, total_races'),
+  ])
+
+  const jockeyMap  = new Map<string, { win_rate: number; total_races: number }>()
+  const trainerMap = new Map<string, { win_rate: number; total_races: number }>()
+
+  for (const j of jockeyData  ?? []) jockeyMap.set(j.jockey_name.toLowerCase(),  { win_rate: j.win_rate,  total_races: j.total_races })
+  for (const t of trainerData ?? []) trainerMap.set(t.trainer_name.toLowerCase(), { win_rate: t.win_rate, total_races: t.total_races })
+
+  // ─── 2. Récupérer le programme PMU du jour ───────────────────────────────────
+  let programme: Record<string, unknown>
   try {
     const r = await fetch(`${PMU_BASE}/${dateStr}`)
     if (!r.ok) return new Response(`PMU fetch failed: ${r.status}`, { status: 500 })
@@ -26,52 +56,66 @@ Deno.serve(async () => {
     return new Response(`PMU fetch error: ${e}`, { status: 500 })
   }
 
-  const reunions = programme?.programme?.reunions ?? []
-  const rows: any[] = []
+  const reunions = (programme?.programme as Record<string, unknown>)?.reunions
+    ?? (programme as Record<string, unknown>)?.reunions
+    ?? []
+  const rows: Record<string, unknown>[] = []
 
-  for (const reunion of reunions) {
-    const reunionNum: number = reunion.numOrdre ?? reunion.numero
-    const courses = reunion.courses ?? []
+  for (const reunion of (reunions as Record<string, unknown>[])) {
+    const reunionNum = (reunion.numOrdre ?? reunion.numero) as number
+    const courses    = (reunion.courses ?? []) as Record<string, unknown>[]
 
     for (const course of courses) {
-      const courseNum: number = course.numOrdre ?? course.numero
-      const statut: string = (course.statut ?? '').toUpperCase()
+      const courseNum = (course.numOrdre ?? course.numero) as number
+      const statut    = ((course.statut ?? '') as string).toUpperCase()
 
-      // Uniquement les courses terminées avec résultats définitifs
       if (statut !== 'ARRIVEE' && statut !== 'ARRIVEE_DEFINITIVE') continue
 
-      const raceId = `pmu-R${reunionNum}-C${courseNum}`
-      const participants: any[] = course.participants ?? []
+      const raceId      = `pmu-R${reunionNum}-C${courseNum}`
+      const raceType    = ((reunion.specialite ?? '') as string).toLowerCase()
+      const participants = (course.participants ?? []) as Record<string, unknown>[]
 
-      // Calcul des facteurs bruts (identique à route.ts)
-      const validOdds = participants.filter((p: any) => {
-        const o = p.dernierRapportDirect?.rapportDirect ?? p.rapport ?? 0
+      // Normalisation des cotes pour le rang marché (raw_odds_rank)
+      const validOdds = participants.filter(p => {
+        const o = ((p.dernierRapportDirect as Record<string,number>|null)?.rapportDirect ?? p.rapport ?? 0) as number
         return o > 0 && o < 90
       })
-      const oddsArr = validOdds.map((p: any) => p.dernierRapportDirect?.rapportDirect ?? p.rapport)
-      const minOdds = Math.min(...(oddsArr.length ? oddsArr : [1]))
-      const maxOdds = Math.max(...(oddsArr.length ? oddsArr : [100]))
+      const oddsArr  = validOdds.map(p => (p.dernierRapportDirect as Record<string,number>|null)?.rapportDirect ?? p.rapport as number)
+      const minOdds  = Math.min(...(oddsArr.length ? oddsArr : [1]))
+      const maxOdds  = Math.max(...(oddsArr.length ? oddsArr : [100]))
       const oddsRange = Math.max(maxOdds - minOdds, 1)
 
       const maxEarnings = Math.max(
-        ...participants.map((p: any) => p.gainsCarriere ?? p.gains ?? 0),
-        1
+        ...participants.map(p => (p.gainsCarriere ?? p.gains ?? 0) as number),
+        1,
       )
 
       for (const p of participants) {
-        const finishPos: number = p.ordreArrivee ?? 0
-        if (!finishPos || finishPos <= 0) continue  // skip non-classé / NP
+        const finishPos = (p.ordreArrivee ?? 0) as number
+        if (!finishPos || finishPos <= 0) continue  // non classé / NP
 
-        const num: number = p.numPmu ?? p.numero
-        const odds = p.dernierRapportDirect?.rapportDirect ?? p.rapport ?? 99
+        const num  = (p.numPmu ?? p.numero) as number
+        const odds = ((p.dernierRapportDirect as Record<string,number>|null)?.rapportDirect
+                      ?? p.rapport
+                      ?? 99) as number
 
-        // Forme (musique)
-        const musicRaw: string = p.musique ?? ''
+        // ── Jockey / Driver ──────────────────────────────────────────────────
+        const jockeyRaw = toTitle(
+          (p.driver ?? p.jockey ?? p.nomDriver ?? p.nomJockey ?? '') as string
+        ).trim() || null
+
+        // ── Entraîneur ───────────────────────────────────────────────────────
+        const trainerRaw = toTitle(
+          ((p.entraineur as Record<string,string>|null)?.nom ?? p.nomEntraineur ?? '') as string
+        ).trim() || null
+
+        // ── Forme (musique) ──────────────────────────────────────────────────
+        const musicRaw = (p.musique ?? '') as string
         let formScore = 5
         if (musicRaw) {
-          const results = musicRaw.split('').filter((c: string) => /[0-9aAdDbBpPT]/.test(c))
-          const recent = results.slice(0, 5)
-          const pts = recent.reduce((acc: number, c: string) => {
+          const results = musicRaw.split('').filter(c => /[0-9aAdDbBpPT]/.test(c))
+          const recent  = results.slice(0, 5)
+          const pts = recent.reduce((acc, c) => {
             if (c === '1') return acc + 10
             if (c === '2') return acc + 8
             if (c === '3') return acc + 6
@@ -83,50 +127,61 @@ Deno.serve(async () => {
           formScore = recent.length > 0 ? Math.min(10, pts / recent.length) : 5
         }
 
-        // Rang odds (signal marché)
+        // ── Signal marché ────────────────────────────────────────────────────
         const oddsRank = odds < 90 ? (1 - (odds - minOdds) / oddsRange) * 10 : 5
 
-        // Statistiques carrière
-        const careerRaces: number = p.nombreCourses ?? 0
-        const wins: number = p.nombreVictoires ?? 0
-        const places: number = (p.nombreVictoires ?? 0) + (p.nombrePlaces ?? 0)
-        const winRate = careerRaces >= 3 ? (wins / careerRaces) * 100 : 0
-        const placeRate = careerRaces >= 3 ? (places / careerRaces) * 100 : 0
+        // ── Statistiques carrière ────────────────────────────────────────────
+        const careerRaces  = (p.nombreCourses  ?? 0) as number
+        const wins         = (p.nombreVictoires ?? 0) as number
+        const places       = wins + ((p.nombrePlaces ?? 0) as number)
+        const winRate      = careerRaces >= 3 ? (wins / careerRaces) * 100 : 0
+        const placeRate    = careerRaces >= 3 ? (places / careerRaces) * 100 : 0
+        const consist      = careerRaces >= 3 ? Math.min(10, winRate / 10)    : 5
+        const placement    = careerRaces >= 3 ? Math.min(10, placeRate / 10)  : 5
 
-        const consist = careerRaces >= 3 ? Math.min(10, winRate / 10) : 5
-        const placement = careerRaces >= 3 ? Math.min(10, placeRate / 10) : 5
+        // ── Mouvement de cote ────────────────────────────────────────────────
+        const prevOdds = ((p.dernierRapportReference as Record<string,number>|null)?.rapportDirect ?? odds) as number
+        const ratio    = odds > 0 ? (prevOdds - odds) / prevOdds : 0
+        const mvt      = Math.max(0, Math.min(10, 5 + ratio * 25))
 
-        // Mouvement de cote
-        const prevOdds = p.dernierRapportReference?.rapportDirect ?? odds
-        const ratio = odds > 0 ? (prevOdds - odds) / prevOdds : 0
-        const mvt = Math.max(0, Math.min(10, 5 + ratio * 25))
-
-        // Âge
-        const age: number = p.age ?? 0
-        const raceType: string = (reunion.specialite ?? '').toLowerCase()
+        // ── Âge optimal par discipline ───────────────────────────────────────
+        const age = (p.age ?? 0) as number
         let ageScore = 5
         if (age > 0) {
-          if (raceType.includes('plat')) ageScore = age >= 3 && age <= 6 ? 9 : age <= 8 ? 6 : 3
-          else if (raceType.includes('trot')) ageScore = age >= 4 && age <= 7 ? 9 : age <= 9 ? 6 : 3
-          else ageScore = age >= 5 && age <= 9 ? 9 : age <= 11 ? 6 : 3
+          if (raceType.includes('plat'))        ageScore = age >= 3 && age <= 6 ? 9 : age <= 8  ? 6 : 3
+          else if (raceType.includes('trot'))   ageScore = age >= 4 && age <= 7 ? 9 : age <= 9  ? 6 : 3
+          else                                  ageScore = age >= 5 && age <= 9 ? 9 : age <= 11 ? 6 : 3
         }
 
-        // Gains carrière normalisés
-        const careerEarnings: number = p.gainsCarriere ?? p.gains ?? 0
-        const earnings = maxEarnings > 0 ? Math.min(10, (careerEarnings / maxEarnings) * 10) : 5
+        // ── Gains carrière normalisés ────────────────────────────────────────
+        const careerEarnings = (p.gainsCarriere ?? p.gains ?? 0) as number
+        const earnings       = maxEarnings > 0 ? Math.min(10, (careerEarnings / maxEarnings) * 10) : 5
+
+        // ── Win rate jockey/trainer dynamique ────────────────────────────────
+        const jockeyKey   = jockeyRaw?.toLowerCase() ?? ''
+        const trainerKey  = trainerRaw?.toLowerCase() ?? ''
+        const jStat = jockeyKey  ? jockeyMap.get(jockeyKey)   : undefined
+        const tStat = trainerKey ? trainerMap.get(trainerKey) : undefined
+
+        const rawJockeyWR  = winRateToScore(jStat?.win_rate  ?? 0, 20, jStat?.total_races  ?? 0)
+        const rawTrainerWR = winRateToScore(tStat?.win_rate  ?? 0, 15, tStat?.total_races ?? 0)
 
         rows.push({
-          race_id: raceId,
-          race_date: raceDate,
-          horse_number: num,
-          finish_pos: finishPos,
-          raw_form: formScore,
-          raw_odds_rank: oddsRank,
-          raw_consist: consist,
-          raw_placement: placement,
-          raw_mvt: mvt,
-          raw_age: ageScore,
-          raw_earnings: earnings,
+          race_id:        raceId,
+          race_date:      raceDate,
+          horse_number:   num,
+          finish_pos:     finishPos,
+          jockey_name:    jockeyRaw,
+          trainer_name:   trainerRaw,
+          raw_form:       formScore,
+          raw_odds_rank:  oddsRank,
+          raw_consist:    consist,
+          raw_placement:  placement,
+          raw_mvt:        mvt,
+          raw_age:        ageScore,
+          raw_earnings:   earnings,
+          raw_jockey_wr:  rawJockeyWR,
+          raw_trainer_wr: rawTrainerWR,
         })
       }
     }
@@ -134,12 +189,25 @@ Deno.serve(async () => {
 
   if (!rows.length) return new Response(JSON.stringify({ collected: 0 }))
 
+  // ─── 3. Sauvegarder les résultats ────────────────────────────────────────────
   const { error } = await supabase.from('race_outcomes').upsert(rows, {
-    onConflict: 'race_id,horse_number',
+    onConflict:       'race_id,horse_number',
     ignoreDuplicates: true,
   })
-
   if (error) return new Response(`DB error: ${error.message}`, { status: 500 })
 
-  return new Response(JSON.stringify({ collected: rows.length }))
+  // ─── 4. Recalculer jockey_stats + trainer_stats (fenêtre 90 jours) ──────────
+  //    La fonction SQL agrège race_outcomes → jockey/trainer stats
+  const { error: rpcErr } = await supabase.rpc('refresh_rider_stats')
+  if (rpcErr) {
+    console.error('refresh_rider_stats error:', rpcErr.message)
+    // Non bloquant : les stats seront recalculées lors du prochain cycle
+  }
+
+  return new Response(JSON.stringify({
+    collected:        rows.length,
+    jockey_stats_ok:  !rpcErr,
+    jockey_loaded:    jockeyMap.size,
+    trainer_loaded:   trainerMap.size,
+  }), { headers: { 'Content-Type': 'application/json' } })
 })

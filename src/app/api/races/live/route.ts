@@ -3,34 +3,81 @@ import { MOCK_RACES, MOCK_HORSES } from '@/lib/mock-data'
 import type { RaceType, TrackCondition, RaceStatus, WeatherCondition } from '@/types'
 import type { LiveHorse, LiveRace, LiveResponse } from '@/types/live'
 import { fetchWeather } from '@/lib/weather'
+import { scoreJockey, scoreTrainer } from '@/lib/scoring/factors'
 
-// ─── Poids du modèle IA (chargés depuis Supabase, fallback sur defaults) ───────
+// ─── Poids du modèle IA — 9 facteurs (chargés depuis Supabase) ───────────────
 
 type ModelWeights = {
   w_form: number; w_odds_rank: number; w_consist: number
   w_placement: number; w_mvt: number; w_age: number; w_earnings: number
+  w_jockey_wr: number; w_trainer_wr: number
 }
 
 const DEFAULT_WEIGHTS: ModelWeights = {
-  w_form: 0.28, w_odds_rank: 0.25, w_consist: 0.12,
-  w_placement: 0.10, w_mvt: 0.10, w_age: 0.08, w_earnings: 0.07,
+  w_form: 0.24, w_odds_rank: 0.22, w_consist: 0.10,
+  w_placement: 0.09, w_mvt: 0.08, w_age: 0.07, w_earnings: 0.06,
+  w_jockey_wr: 0.08, w_trainer_wr: 0.06,
 }
 
 async function loadModelWeights(): Promise<ModelWeights> {
   try {
-    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/model_weights?select=w_form,w_odds_rank,w_consist,w_placement,w_mvt,w_age,w_earnings&limit=1`
-    const res = await fetch(url, {
+    const cols = 'w_form,w_odds_rank,w_consist,w_placement,w_mvt,w_age,w_earnings,w_jockey_wr,w_trainer_wr'
+    const url  = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/model_weights?select=${cols}&limit=1`
+    const res  = await fetch(url, {
       headers: {
-        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        apikey:        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
       },
       next: { revalidate: 3600 },
     })
     if (!res.ok) return DEFAULT_WEIGHTS
-    const rows = await res.json() as ModelWeights[]
-    return rows?.[0] ?? DEFAULT_WEIGHTS
+    const rows = await res.json() as Partial<ModelWeights>[]
+    const row  = rows?.[0]
+    if (!row) return DEFAULT_WEIGHTS
+    // Fallback sur les defaults pour les colonnes absentes (avant migration)
+    return { ...DEFAULT_WEIGHTS, ...row }
   } catch {
     return DEFAULT_WEIGHTS
+  }
+}
+
+// ─── Stats jockey / entraîneur (chargées depuis Supabase, cache 4h) ──────────
+
+type RiderStat = { win_rate: number; total_races: number }
+
+async function loadRiderStats(): Promise<{
+  jockeys:  Map<string, RiderStat>
+  trainers: Map<string, RiderStat>
+}> {
+  const emptyResult = { jockeys: new Map<string, RiderStat>(), trainers: new Map<string, RiderStat>() }
+  try {
+    const base    = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const anon    = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    const headers = { apikey: anon, Authorization: `Bearer ${anon}` }
+
+    const [jRes, tRes] = await Promise.all([
+      fetch(`${base}/rest/v1/jockey_stats?select=jockey_name,win_rate,total_races`, {
+        headers, next: { revalidate: 14400 },  // 4h
+      }),
+      fetch(`${base}/rest/v1/trainer_stats?select=trainer_name,win_rate,total_races`, {
+        headers, next: { revalidate: 14400 },
+      }),
+    ])
+
+    const jockeys  = new Map<string, RiderStat>()
+    const trainers = new Map<string, RiderStat>()
+
+    if (jRes.ok) {
+      const rows = await jRes.json() as Array<{ jockey_name: string; win_rate: number; total_races: number }>
+      for (const r of rows) jockeys.set(r.jockey_name.toLowerCase(), { win_rate: r.win_rate, total_races: r.total_races })
+    }
+    if (tRes.ok) {
+      const rows = await tRes.json() as Array<{ trainer_name: string; win_rate: number; total_races: number }>
+      for (const r of rows) trainers.set(r.trainer_name.toLowerCase(), { win_rate: r.win_rate, total_races: r.total_races })
+    }
+    return { jockeys, trainers }
+  } catch {
+    return emptyResult
   }
 }
 
@@ -230,6 +277,13 @@ function parseParticipant(p: any, raceId: string, idx: number): LiveHorse {
   }
 }
 
+// Convertit un win_rate (0–100%) en score 0–10
+// Fiable seulement si assez de données (minRaces seuil)
+function winRateToScore(stat: RiderStat | undefined, minRaces: number): number {
+  if (!stat || stat.total_races < minRaces) return -1  // -1 = données insuffisantes
+  return Math.min(10, stat.win_rate * 0.5)
+}
+
 // ─── Build LiveRace from PMU course + participants ─────────────────────────────
 
 function buildLiveRace(
@@ -241,6 +295,8 @@ function buildLiveRace(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   participants: any[],
   weights: ModelWeights = DEFAULT_WEIGHTS,
+  jockeyStats: Map<string, RiderStat> = new Map(),
+  trainerStats: Map<string, RiderStat> = new Map(),
 ): LiveRace {
   const reunionNum: number = reunion.numOfficiel ?? 1
   const courseNum: number = course.numOrdre ?? course.numExterne ?? 1
@@ -290,14 +346,12 @@ function buildLiveRace(
     horses.forEach(h => { h.winProbability = eq })
   }
 
-  // ── Score IA composite ────────────────────────────────────────────────────────
-  // ── Scoring IA 7 facteurs ────────────────────────────────────────────────────
+  // ── Scoring IA 9 facteurs ────────────────────────────────────────────────────
   const oddsValues = horses.filter(h => h.odds < 90).map(h => h.odds)
   const minOdds = Math.min(...(oddsValues.length ? oddsValues : [1]))
   const maxOdds = Math.max(...(oddsValues.length ? oddsValues : [100]))
   const oddsRange = Math.max(maxOdds - minOdds, 1)
 
-  // Normalise les gains carrière sur le champ (0-10)
   const maxEarnings = Math.max(...horses.map(h => h._careerEarnings), 1)
 
   horses.forEach(h => {
@@ -328,10 +382,26 @@ function buildLiveRace(
     // 7. Classe du cheval (gains carrière normalisés) — 0-10
     const earnings = maxEarnings > 0 ? Math.min(10, (h._careerEarnings / maxEarnings) * 10) : 5
 
-    // Pondération finale (poids adaptatifs chargés depuis la DB)
-    const raw = form * weights.w_form + oddsRank * weights.w_odds_rank
-              + consist * weights.w_consist + placement * weights.w_placement
-              + mvt * weights.w_mvt + age * weights.w_age + earnings * weights.w_earnings
+    // 8. Win rate jockey (dynamique DB, fallback listes élite) — 0-10
+    const jockeyKey  = h.jockey.toLowerCase()
+    const jStatScore = winRateToScore(jockeyStats.get(jockeyKey), 20)
+    const jockeyWR   = jStatScore >= 0 ? jStatScore : scoreJockey(h.jockey)
+
+    // 9. Win rate entraîneur (dynamique DB, fallback listes élite) — 0-10
+    const trainerKey  = h._trainer.toLowerCase()
+    const tStatScore  = winRateToScore(trainerStats.get(trainerKey), 15)
+    const trainerWR   = tStatScore >= 0 ? tStatScore : scoreTrainer(h._trainer)
+
+    // Pondération finale — poids adaptatifs RankNet chargés depuis la DB
+    const raw = form       * weights.w_form
+              + oddsRank   * weights.w_odds_rank
+              + consist    * weights.w_consist
+              + placement  * weights.w_placement
+              + mvt        * weights.w_mvt
+              + age        * weights.w_age
+              + earnings   * weights.w_earnings
+              + jockeyWR   * weights.w_jockey_wr
+              + trainerWR  * weights.w_trainer_wr
 
     h.aiScore = Math.round(Math.min(100, Math.max(0, raw * 10)))
     h.confidenceLevel = h.aiScore >= 70 ? 'fort' : h.aiScore >= 50 ? 'moyen' : 'faible'
@@ -378,7 +448,12 @@ function buildLiveRace(
 
 // ─── Main PMU fetch ───────────────────────────────────────────────────────────
 
-async function fetchPMURaces(today: Date, weights: ModelWeights): Promise<LiveRace[] | null> {
+async function fetchPMURaces(
+  today: Date,
+  weights: ModelWeights,
+  jockeyStats: Map<string, RiderStat>,
+  trainerStats: Map<string, RiderStat>,
+): Promise<LiveRace[] | null> {
   const ddmmyyyy = toDDMMYYYY(today)
   const todayISO = today.toISOString().slice(0, 10)
 
@@ -388,7 +463,6 @@ async function fetchPMURaces(today: Date, weights: ModelWeights): Promise<LiveRa
   const reunions = data?.programme?.reunions ?? data?.reunions ?? null
   if (!Array.isArray(reunions) || reunions.length === 0) return null
 
-  // Collect all (reunion, course) pairs
   const jobs: { reunion: Record<string, unknown>; course: Record<string, unknown> }[] = []
   for (const reunion of reunions) {
     for (const course of (reunion.courses ?? [])) {
@@ -409,7 +483,7 @@ async function fetchPMURaces(today: Date, weights: ModelWeights): Promise<LiveRa
         partData?.partants ??
         (course as { participants?: unknown[] }).participants ??
         []
-      return buildLiveRace(course, reunion, todayISO, participants, weights)
+      return buildLiveRace(course, reunion, todayISO, participants, weights, jockeyStats, trainerStats)
     })
   )
 
@@ -457,9 +531,12 @@ function buildMockLiveRaces(): LiveRace[] {
 
 export async function GET(): Promise<NextResponse<LiveResponse>> {
   const now = new Date()
-  // loadModelWeights est mise en cache Next.js (revalidate 1h) — overhead négligeable
-  const weights = await loadModelWeights()
-  let races = await fetchPMURaces(now, weights)
+  // Les 3 chargements sont parallèles — overhead minimal
+  const [weights, { jockeys, trainers }] = await Promise.all([
+    loadModelWeights(),
+    loadRiderStats(),
+  ])
+  let races = await fetchPMURaces(now, weights, jockeys, trainers)
   const source: 'pmu' | 'mock' = races ? 'pmu' : 'mock'
   if (!races) races = buildMockLiveRaces()
 

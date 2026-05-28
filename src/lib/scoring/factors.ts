@@ -111,19 +111,24 @@ const ELITE_JOCKEYS_OBSTACLE = new Set([
   'dorin moutascu', 'mathieu abrivard', 'bertrand lestrade',
 ])
 
-export function scoreJockey(jockeyName: string): number {
+// dynamicWinRate : win_rate depuis jockey_stats (0–100), undefined = pas de données
+// Si données suffisantes (>= 20 courses implicite dans l'appelant), utilisées en priorité
+export function scoreJockey(jockeyName: string, dynamicWinRate?: number): number {
+  if (dynamicWinRate !== undefined) {
+    // 0% → 0, 10% → 5, 20%+ → 10 (calibré sur le taux réel des jockeys français)
+    return Math.min(10, dynamicWinRate * 0.5)
+  }
   const name = jockeyName.toLowerCase().trim()
   if (ELITE_JOCKEYS_GALOP.has(name)) return 9.5
   if (ELITE_DRIVERS_TROT.has(name))  return 9.5
   if (ELITE_JOCKEYS_OBSTACLE.has(name)) return 9
-  // Partial match (first 5 chars) for name formatting variants (e.g. "P.Boudot" vs "Pierre-Charles Boudot")
   const short = name.replace(/[-.']/g, ' ').split(' ').filter(Boolean).pop() ?? ''
   if (short.length >= 5) {
     for (const elite of [...ELITE_JOCKEYS_GALOP, ...ELITE_DRIVERS_TROT]) {
       if (elite.endsWith(short)) return 8.5
     }
   }
-  return 6 // valeur neutre — jockey inconnu mais actif
+  return 6
 }
 
 // ─── Entraîneurs élite ────────────────────────────────────────────────────────
@@ -158,12 +163,15 @@ const ELITE_TRAINERS_OBSTACLE = new Set([
   'gavin cromwell', 'henry de bromhead', 'jessica harrington',
 ])
 
-export function scoreTrainer(trainerName: string): number {
+// dynamicWinRate : win_rate depuis trainer_stats (0–100), undefined = pas de données
+export function scoreTrainer(trainerName: string, dynamicWinRate?: number): number {
+  if (dynamicWinRate !== undefined) {
+    return Math.min(10, dynamicWinRate * 0.5)
+  }
   const name = trainerName.toLowerCase().trim().replace(/\([^)]*\)/g, '').trim()
   if (ELITE_TRAINERS_GALOP.has(name))    return 9.5
   if (ELITE_TRAINERS_TROT.has(name))     return 9.5
   if (ELITE_TRAINERS_OBSTACLE.has(name)) return 9
-  // Partial match for name formatting variants (e.g. "D.ARTU (S)" → "artu")
   const lastName = name.split(/[\s.]+/).filter(Boolean).pop() ?? ''
   if (lastName.length >= 4) {
     for (const elite of [...ELITE_TRAINERS_GALOP, ...ELITE_TRAINERS_TROT]) {
