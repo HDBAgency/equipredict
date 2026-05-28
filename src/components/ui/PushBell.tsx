@@ -1,31 +1,31 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
-import { Bell, BellOff } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Bell, BellOff, Loader2 } from 'lucide-react'
 import { subscribePush, unsubscribePush } from '@/app/actions/push'
 
 export default function PushBell() {
   const [state, setState] = useState<'loading' | 'denied' | 'subscribed' | 'unsubscribed'>('loading')
-  const [isPending, startTransition] = useTransition()
+  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      setState('denied')
-      return
+      setState('denied'); return
     }
     if (Notification.permission === 'denied') { setState('denied'); return }
 
-    navigator.serviceWorker.ready.then(reg =>
-      reg.pushManager.getSubscription()
-    ).then(sub => {
-      setState(sub ? 'subscribed' : 'unsubscribed')
-    }).catch(() => setState('unsubscribed'))
+    navigator.serviceWorker.ready
+      .then(reg => reg.pushManager.getSubscription())
+      .then(sub => setState(sub ? 'subscribed' : 'unsubscribed'))
+      .catch(() => setState('unsubscribed'))
   }, [])
 
   if (state === 'denied' || state === 'loading') return null
 
   async function toggle() {
-    startTransition(async () => {
+    if (busy) return
+    setBusy(true)
+    try {
       if (state === 'subscribed') {
         const reg = await navigator.serviceWorker.ready
         const sub = await reg.pushManager.getSubscription()
@@ -35,27 +35,30 @@ export default function PushBell() {
         return
       }
 
+      // iOS exige que requestPermission soit appelé directement depuis le geste
       const permission = await Notification.requestPermission()
       if (permission !== 'granted') { setState('denied'); return }
 
       const reg = await navigator.serviceWorker.ready
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-        ),
+        applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
       })
 
       const json = sub.toJSON() as { endpoint: string; keys: { auth: string; p256dh: string } }
       const result = await subscribePush(json)
       if (!result?.error) setState('subscribed')
-    })
+    } catch (err) {
+      console.error('PushBell error', err)
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
     <button
       onClick={toggle}
-      disabled={isPending}
+      disabled={busy}
       title={state === 'subscribed' ? 'Désactiver les notifications' : 'Activer les notifications courses'}
       className={`lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
         state === 'subscribed'
@@ -63,9 +66,11 @@ export default function PushBell() {
           : 'bg-eq-card border-eq-border text-eq-muted hover:border-eq-border-bright hover:text-eq-text'
       }`}
     >
-      {state === 'subscribed'
-        ? <><Bell className="w-3.5 h-3.5" /> Notifs actives</>
-        : <><BellOff className="w-3.5 h-3.5" /> Notifier</>
+      {busy
+        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        : state === 'subscribed'
+          ? <><Bell className="w-3.5 h-3.5" /> Notifs actives</>
+          : <><BellOff className="w-3.5 h-3.5" /> Notifier</>
       }
     </button>
   )
