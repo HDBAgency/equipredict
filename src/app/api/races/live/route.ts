@@ -7,34 +7,38 @@ import { scoreJockey, scoreTrainer } from '@/lib/scoring/factors'
 
 // ─── Poids du modèle IA — 9 facteurs (chargés depuis Supabase) ───────────────
 
+// ─── Poids du modèle IA — 12 facteurs (chargés depuis Supabase) ──────────────
+
 type ModelWeights = {
   w_form: number; w_odds_rank: number; w_consist: number
   w_placement: number; w_mvt: number; w_age: number; w_earnings: number
   w_jockey_wr: number; w_trainer_wr: number
+  w_weight_penalty: number; w_form_x_signal: number; w_jockey_x_trainer: number
 }
 
 const DEFAULT_WEIGHTS: ModelWeights = {
-  w_form: 0.24, w_odds_rank: 0.22, w_consist: 0.10,
-  w_placement: 0.09, w_mvt: 0.08, w_age: 0.07, w_earnings: 0.06,
-  w_jockey_wr: 0.08, w_trainer_wr: 0.06,
+  w_form: 0.20, w_odds_rank: 0.18, w_consist: 0.09,
+  w_placement: 0.08, w_mvt: 0.07, w_age: 0.06, w_earnings: 0.05,
+  w_jockey_wr: 0.07, w_trainer_wr: 0.05,
+  w_weight_penalty: 0.04, w_form_x_signal: 0.06, w_jockey_x_trainer: 0.05,
 }
 
 async function loadModelWeights(): Promise<ModelWeights> {
   try {
-    const cols = 'w_form,w_odds_rank,w_consist,w_placement,w_mvt,w_age,w_earnings,w_jockey_wr,w_trainer_wr'
+    const cols = Object.keys(DEFAULT_WEIGHTS).join(',')
     const url  = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/model_weights?select=${cols}&limit=1`
     const res  = await fetch(url, {
       headers: {
         apikey:        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
       },
-      next: { revalidate: 3600 },
+      // 10 min : rafraîchissement intra-journalier après chaque cycle RankNet
+      next: { revalidate: 600 },
     })
     if (!res.ok) return DEFAULT_WEIGHTS
     const rows = await res.json() as Partial<ModelWeights>[]
     const row  = rows?.[0]
     if (!row) return DEFAULT_WEIGHTS
-    // Fallback sur les defaults pour les colonnes absentes (avant migration)
     return { ...DEFAULT_WEIGHTS, ...row }
   } catch {
     return DEFAULT_WEIGHTS
@@ -334,17 +338,15 @@ function buildLiveRace(
   }
   const horses = participants.map((p, i) => parseParticipant(p, raceId, i)) as RichHorse[]
 
-  // ── Probabilités odds (inverse-odds softmax) ─────────────────────────────────
+  // ── Probabilités marché (inverse-odds normalisé) — calculées maintenant ──────
+  // Sera fusionné avec softmax IA après le scoring (probabilités calibrées)
   const validOdds = horses.filter(h => h.odds < 90)
-  if (validOdds.length > 0) {
-    const sumInv = validOdds.reduce((s, h) => s + 1 / h.odds, 0)
-    horses.forEach(h => {
-      h.winProbability = h.odds < 90 ? Math.round((1 / h.odds / sumInv) * 1000) / 10 : 0
-    })
-  } else {
-    const eq = Math.round(1000 / Math.max(1, horses.length)) / 10
-    horses.forEach(h => { h.winProbability = eq })
-  }
+  const sumInv    = validOdds.reduce((s, h) => s + 1 / h.odds, 0)
+  horses.forEach(h => {
+    h.winProbability = sumInv > 0 && h.odds < 90
+      ? Math.round((1 / h.odds / sumInv) * 1000) / 10
+      : Math.round(1000 / Math.max(1, horses.length)) / 10
+  })
 
   // ── Scoring IA 9 facteurs ────────────────────────────────────────────────────
   const oddsValues = horses.filter(h => h.odds < 90).map(h => h.odds)
@@ -392,20 +394,55 @@ function buildLiveRace(
     const tStatScore  = winRateToScore(trainerStats.get(trainerKey), 15)
     const trainerWR   = tStatScore >= 0 ? tStatScore : scoreTrainer(h._trainer)
 
-    // Pondération finale — poids adaptatifs RankNet chargés depuis la DB
-    const raw = form       * weights.w_form
-              + oddsRank   * weights.w_odds_rank
-              + consist    * weights.w_consist
-              + placement  * weights.w_placement
-              + mvt        * weights.w_mvt
-              + age        * weights.w_age
-              + earnings   * weights.w_earnings
-              + jockeyWR   * weights.w_jockey_wr
-              + trainerWR  * weights.w_trainer_wr
+    // 10. Poids de monte / handicap — 0-10 (galop uniquement)
+    let weightPenalty = 5
+    if (h._weight > 0 && raceType === 'plat') {
+      if      (h._weight <= 54) weightPenalty = 9.5
+      else if (h._weight <= 57) weightPenalty = 8.0
+      else if (h._weight <= 60) weightPenalty = 6.5
+      else if (h._weight <= 63) weightPenalty = 4.5
+      else                      weightPenalty = 2.5
+    }
+
+    // 11. Interaction forme × signal marché (double confirmation) — 0-10
+    const formXSignal = (form * oddsRank) / 10
+
+    // 12. Interaction jockey × trainer (effet duo élite) — 0-10
+    const jockeyXTrainer = (jockeyWR * trainerWR) / 10
+
+    // Pondération finale — 12 facteurs, poids RankNet adaptatifs
+    const raw = form          * weights.w_form
+              + oddsRank      * weights.w_odds_rank
+              + consist       * weights.w_consist
+              + placement     * weights.w_placement
+              + mvt           * weights.w_mvt
+              + age           * weights.w_age
+              + earnings      * weights.w_earnings
+              + jockeyWR      * weights.w_jockey_wr
+              + trainerWR     * weights.w_trainer_wr
+              + weightPenalty * weights.w_weight_penalty
+              + formXSignal   * weights.w_form_x_signal
+              + jockeyXTrainer * weights.w_jockey_x_trainer
 
     h.aiScore = Math.round(Math.min(100, Math.max(0, raw * 10)))
     h.confidenceLevel = h.aiScore >= 70 ? 'fort' : h.aiScore >= 50 ? 'moyen' : 'faible'
   })
+
+  // ── Probabilités calibrées : 40% softmax IA + 60% signal marché ─────────────
+  // Blend conservateur : le marché reste la référence, l'IA affine
+  const validScored = horses.filter(h => h.odds < 90)
+  if (validScored.length > 0) {
+    // Softmax sur les scores IA (évite les underflows avec décalage)
+    const maxAI   = Math.max(...validScored.map(h => h.aiScore))
+    const expAI   = validScored.map(h => Math.exp((h.aiScore - maxAI) / 10))
+    const sumExpAI = expAI.reduce((s, v) => s + v, 0)
+
+    validScored.forEach((h, i) => {
+      const pModel  = (expAI[i] / sumExpAI) * 100       // probabilité softmax IA
+      const pMarket = h.winProbability                    // signal marché (déjà calculé)
+      h.winProbability = Math.round((0.4 * pModel + 0.6 * pMarket) * 10) / 10
+    })
+  }
 
   // Marquer le meilleur score IA comme recommandé
   const best = horses.filter(h => h.odds < 90).reduce<RichHorse | null>(

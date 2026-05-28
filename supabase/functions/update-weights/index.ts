@@ -9,15 +9,17 @@ const LR       = 0.005  // learning rate (normalisé par nb de paires)
 const L2       = 0.01   // régularisation L2 (évite la dérive vers les bords)
 const VAL_FRAC = 0.30   // 30% des courses pour la validation
 
-// ─── Facteurs et poids du modèle (9 facteurs) ────────────────────────────────
+// ─── Facteurs et poids du modèle (12 facteurs) ───────────────────────────────
 const FACTORS = [
-  'raw_form', 'raw_odds_rank', 'raw_consist', 'raw_placement',
-  'raw_mvt',  'raw_age',       'raw_earnings', 'raw_jockey_wr', 'raw_trainer_wr',
+  'raw_form',   'raw_odds_rank',  'raw_consist',        'raw_placement',
+  'raw_mvt',    'raw_age',        'raw_earnings',        'raw_jockey_wr',
+  'raw_trainer_wr', 'raw_weight_penalty', 'raw_form_x_signal', 'raw_jockey_x_trainer',
 ] as const
 
 const KEYS = [
-  'w_form', 'w_odds_rank', 'w_consist', 'w_placement',
-  'w_mvt',  'w_age',       'w_earnings', 'w_jockey_wr', 'w_trainer_wr',
+  'w_form',   'w_odds_rank',  'w_consist',        'w_placement',
+  'w_mvt',    'w_age',        'w_earnings',        'w_jockey_wr',
+  'w_trainer_wr', 'w_weight_penalty', 'w_form_x_signal', 'w_jockey_x_trainer',
 ] as const
 
 type FactorKey = typeof FACTORS[number]
@@ -25,15 +27,18 @@ type WeightKey = typeof KEYS[number]
 
 // Plages autorisées par poids (empêche les dérives extrêmes)
 const BOUNDS: Record<WeightKey, [number, number]> = {
-  w_form:       [0.12, 0.40],
-  w_odds_rank:  [0.10, 0.38],
-  w_consist:    [0.04, 0.20],
-  w_placement:  [0.03, 0.18],
-  w_mvt:        [0.03, 0.18],
-  w_age:        [0.02, 0.15],
-  w_earnings:   [0.02, 0.12],
-  w_jockey_wr:  [0.04, 0.20],
-  w_trainer_wr: [0.03, 0.18],
+  w_form:             [0.10, 0.35],
+  w_odds_rank:        [0.08, 0.32],
+  w_consist:          [0.03, 0.18],
+  w_placement:        [0.03, 0.16],
+  w_mvt:              [0.03, 0.16],
+  w_age:              [0.02, 0.12],
+  w_earnings:         [0.02, 0.10],
+  w_jockey_wr:        [0.03, 0.18],
+  w_trainer_wr:       [0.02, 0.14],
+  w_weight_penalty:   [0.01, 0.10],
+  w_form_x_signal:    [0.02, 0.14],
+  w_jockey_x_trainer: [0.02, 0.12],
 }
 
 // Valeur neutre par défaut si un facteur est absent
@@ -167,7 +172,8 @@ Deno.serve(async () => {
       'race_id', 'horse_number', 'finish_pos',
       'raw_form', 'raw_odds_rank', 'raw_consist', 'raw_placement',
       'raw_mvt',  'raw_age',       'raw_earnings',
-      'raw_jockey_wr', 'raw_trainer_wr',
+      'raw_jockey_wr',    'raw_trainer_wr',
+      'raw_weight_penalty', 'raw_form_x_signal', 'raw_jockey_x_trainer',
     ].join(','))
     .gte('race_date', since)
   if (oErr) return new Response(`outcomes error: ${oErr.message}`, { status: 500 })

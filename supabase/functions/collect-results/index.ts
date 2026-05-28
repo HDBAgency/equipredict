@@ -166,22 +166,44 @@ Deno.serve(async () => {
         const rawJockeyWR  = winRateToScore(jStat?.win_rate  ?? 0, 20, jStat?.total_races  ?? 0)
         const rawTrainerWR = winRateToScore(tStat?.win_rate  ?? 0, 15, tStat?.total_races ?? 0)
 
+        // ── Poids de monte (handicap) — 0-10 ────────────────────────────────
+        // En galop : léger = avantage. En trot : moins pertinent.
+        const carryWeight = (p.poidsConditionMonte ?? p.handicapPoids ?? p.poids ?? 0) as number
+        let weightPenalty = 5  // neutre si inconnu
+        if (carryWeight > 0 && raceType.includes('plat')) {
+          if (carryWeight <= 54)      weightPenalty = 9.5
+          else if (carryWeight <= 57) weightPenalty = 8
+          else if (carryWeight <= 60) weightPenalty = 6.5
+          else if (carryWeight <= 63) weightPenalty = 4.5
+          else                        weightPenalty = 2.5
+        }
+
+        // ── Interaction forme × signal marché (double confirmation) — 0-10 ──
+        // Signal fort seulement quand BEIDE le modèle ET le marché s'accordent
+        const rawFormXSignal = (formScore * oddsRank) / 10
+
+        // ── Interaction jockey × trainer (effet duo élite) — 0-10 ────────────
+        const rawJockeyXTrainer = (rawJockeyWR * rawTrainerWR) / 10
+
         rows.push({
-          race_id:        raceId,
-          race_date:      raceDate,
-          horse_number:   num,
-          finish_pos:     finishPos,
-          jockey_name:    jockeyRaw,
-          trainer_name:   trainerRaw,
-          raw_form:       formScore,
-          raw_odds_rank:  oddsRank,
-          raw_consist:    consist,
-          raw_placement:  placement,
-          raw_mvt:        mvt,
-          raw_age:        ageScore,
-          raw_earnings:   earnings,
-          raw_jockey_wr:  rawJockeyWR,
-          raw_trainer_wr: rawTrainerWR,
+          race_id:              raceId,
+          race_date:            raceDate,
+          horse_number:         num,
+          finish_pos:           finishPos,
+          jockey_name:          jockeyRaw,
+          trainer_name:         trainerRaw,
+          raw_form:             formScore,
+          raw_odds_rank:        oddsRank,
+          raw_consist:          consist,
+          raw_placement:        placement,
+          raw_mvt:              mvt,
+          raw_age:              ageScore,
+          raw_earnings:         earnings,
+          raw_jockey_wr:        rawJockeyWR,
+          raw_trainer_wr:       rawTrainerWR,
+          raw_weight_penalty:   weightPenalty,
+          raw_form_x_signal:    rawFormXSignal,
+          raw_jockey_x_trainer: rawJockeyXTrainer,
         })
       }
     }
