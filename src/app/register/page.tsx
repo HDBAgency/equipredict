@@ -59,7 +59,7 @@ function RegisterForm() {
       })
       if (signUpError) throw signUpError
       setSuccess(true)
-      const redirect = plan === 'free' ? '/dashboard' : '/pricing'
+      const redirect = plan === 'free' ? '/dashboard-gratuit' : '/pricing'
       setTimeout(() => router.push(redirect), 1500)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur lors de l'inscription")
