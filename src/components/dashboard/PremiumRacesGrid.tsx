@@ -8,6 +8,8 @@ import {
 } from 'lucide-react'
 import type { LiveResponse, LiveRace, LiveHorse } from '@/types/live'
 import type { RaceType } from '@/types'
+import PushBell from '@/components/ui/PushBell'
+import { saveFavorite, removeFavorite, loadFavorites, pingActive } from '@/app/actions/push'
 
 const POLL_INTERVAL = 20_000
 const FLASH_DURATION = 1600
@@ -270,19 +272,68 @@ export function PremiumRacesGrid({ activeType, basePath = '/dashboard-premium', 
   const [refreshing, setRefreshing] = useState(false)
   const [showPast, setShowPast]     = useState(false)
   const [favorites, setFavorites]   = useState<Set<string>>(new Set())
+  const [plan, setPlan]             = useState<string>('free')
+  const racesRef = useRef<LiveRace[]>([])
 
+  // Charger favoris (localStorage + Supabase) et récupérer le plan
   useEffect(() => {
     const stored = localStorage.getItem('eq_pro_favorites')
     if (stored) setFavorites(new Set(JSON.parse(stored)))
+
+    async function init() {
+      try {
+        const { createClient } = await import('@/lib/supabase/client')
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+
+        const { data: profile } = await supabase.from('profiles').select('plan').eq('id', session.user.id).single()
+        if (profile?.plan) setPlan(profile.plan)
+
+        const ids = await loadFavorites()
+        if (ids.length > 0) {
+          setFavorites(prev => {
+            const merged = new Set([...prev, ...ids])
+            localStorage.setItem('eq_pro_favorites', JSON.stringify([...merged]))
+            return merged
+          })
+        }
+      } catch {}
+    }
+    init()
+
+    // Ping SW pour signaler que l'app est active
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(reg => {
+        reg.active?.postMessage({ type: 'PING' })
+      })
+      // Ping serveur pour mettre à jour last_active_at
+      pingActive()
+    }
   }, [])
 
   function toggleFavorite(raceId: string, e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
+
+    const race = racesRef.current.find(r => r.id === raceId)
+
     setFavorites(prev => {
       const next = new Set(prev)
-      if (next.has(raceId)) next.delete(raceId)
-      else next.add(raceId)
+      if (next.has(raceId)) {
+        next.delete(raceId)
+        removeFavorite(raceId)
+      } else {
+        next.add(raceId)
+        if (race) {
+          saveFavorite({
+            raceId: race.id,
+            raceName: race.name,
+            hippodrome: race.racecourse,
+            startTime: race.startTime,
+          })
+        }
+      }
       localStorage.setItem('eq_pro_favorites', JSON.stringify([...next]))
       return next
     })
@@ -340,6 +391,7 @@ export function PremiumRacesGrid({ activeType, basePath = '/dashboard-premium', 
   }, [fetchRaces])
 
   const allRaces: LiveRace[] = data?.races ?? []
+  racesRef.current = allRaces
   const filtered = activeType === 'favoris'
     ? allRaces.filter(r => favorites.has(r.id))
     : allRaces.filter(r => activeType === 'all' || r.raceType === activeType)
@@ -406,14 +458,17 @@ export function PremiumRacesGrid({ activeType, basePath = '/dashboard-premium', 
           )}
         </div>
 
-        <button
-          onClick={() => fetchRaces(true)}
-          disabled={refreshing}
-          className="self-start sm:self-auto flex items-center gap-1.5 text-xs text-white hover:text-white/80 transition-colors px-3 py-1.5 rounded-lg border border-eq-border hover:border-eq-border-bright bg-eq-card disabled:opacity-50"
-        >
-          <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
-          Actualiser
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {showFavorites && <PushBell plan={plan} />}
+          <button
+            onClick={() => fetchRaces(true)}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 text-xs text-white hover:text-white/80 transition-colors px-3 py-1.5 rounded-lg border border-eq-border hover:border-eq-border-bright bg-eq-card disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+            Actualiser
+          </button>
+        </div>
       </div>
 
       {error && (
