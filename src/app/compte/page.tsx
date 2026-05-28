@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { User, CreditCard, LogOut, FileText } from 'lucide-react'
+import { User, CreditCard, LogOut, FileText, Star } from 'lucide-react'
 import LogoutButton from '@/components/ui/LogoutButton'
 import AvatarUpload from '@/components/ui/AvatarUpload'
+import ReviewForm from '@/components/ui/ReviewForm'
 
 const PLAN_LABELS: Record<string, { label: string; color: string }> = {
   free:    { label: 'Gratuit',  color: 'text-white border-white/20' },
@@ -17,6 +18,7 @@ export default async function ComptePage() {
   if (!session) redirect('/login')
 
   const { data: profile } = await supabase.from('profiles').select('name, plan, created_at, avatar_url').eq('id', session.user.id).single()
+  const { data: existingReview } = await supabase.from('reviews').select('stars, text').eq('user_id', session.user.id).maybeSingle()
 
   const name: string = profile?.name ?? ''
   const plan: string = profile?.plan ?? 'free'
@@ -92,6 +94,22 @@ export default async function ComptePage() {
             </a>
           </div>
         )}
+
+        {/* Laisser un avis */}
+        <div className="mt-6 bg-eq-card border border-eq-border rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 rounded-xl bg-eq-surface border border-eq-border flex items-center justify-center shrink-0">
+              <Star className="w-4 h-4 text-eq-amber" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-white">
+                {existingReview ? 'Votre avis' : 'Laisser un avis'}
+              </h2>
+              <p className="text-xs text-eq-muted">Votre retour nous aide à améliorer l'app</p>
+            </div>
+          </div>
+          <ReviewForm existing={existingReview} />
+        </div>
 
         {/* Mentions légales */}
         <div className="mt-6 bg-eq-card border border-eq-border rounded-2xl p-6">
