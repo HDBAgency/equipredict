@@ -23,7 +23,7 @@ export default function PushBell({ plan }: { plan: string }) {
   }, [])
 
   if (plan !== 'premium' && plan !== 'pro') return null
-  if (state === 'unknown' || state === 'denied') return null
+  if (state === 'denied') return null
 
   async function toggle() {
     startTransition(async () => {
