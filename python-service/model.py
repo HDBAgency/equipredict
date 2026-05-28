@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 import xgboost as xgb
-from supabase import create_client, Client
+from supabase import create_client
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ FEATURES: list[str] = [
 NEUTRAL = 5.0  # valeur neutre (données manquantes)
 
 
-def _get_supabase() -> Client:
+def _get_supabase():
     url = os.environ["SUPABASE_URL"]
     key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
     return create_client(url, key)
@@ -146,6 +146,7 @@ def train(days: int = 90) -> dict:
         n_train, len(X_train), n_races - n_train,
     )
 
+    # early_stopping_rounds dans le constructeur (API XGBoost 2.x)
     model = xgb.XGBRanker(
         objective="rank:pairwise",
         n_estimators=400,
@@ -158,17 +159,20 @@ def train(days: int = 90) -> dict:
         reg_lambda=1.0,
         random_state=42,
         verbosity=0,
-        eval_metric="ndcg@3",
         early_stopping_rounds=40,
     )
 
-    model.fit(
-        X_train, y_train,
-        group=g_train,
-        eval_set=[(X_val, y_val)],
-        eval_group=[g_val],
-        verbose=False,
-    )
+    # Validation set pour early stopping (XGBoost 2.x : eval_group dans fit)
+    if len(g_val) > 0:
+        model.fit(
+            X_train, y_train,
+            group=g_train,
+            eval_set=[(X_val, y_val)],
+            eval_group=[g_val],
+            verbose=False,
+        )
+    else:
+        model.fit(X_train, y_train, group=g_train, verbose=False)
 
     model.save_model(str(MODEL_PATH))
     logger.info("Model saved → %s (best iter: %d)", MODEL_PATH, model.best_iteration)
