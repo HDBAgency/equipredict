@@ -250,12 +250,14 @@ Deno.serve(async (req) => {
     headers: { 'Content-Type': 'application/json' },
   })
 
-  // ─── 3. Sauvegarder (upsert — met à jour les lignes existantes) ──────────────
-  const { error } = await supabase.from('race_outcomes').upsert(allRows, {
-    onConflict:       'race_id,horse_number',
-    ignoreDuplicates: false,
-  })
-  if (error) return new Response(`DB error: ${error.message}`, { status: 500 })
+  // ─── 3. Sauvegarder via stored procedure (bypass schema cache PostgREST) ──────
+  const BATCH = 300
+  for (let i = 0; i < allRows.length; i += BATCH) {
+    const { error } = await supabase.rpc('upsert_race_outcomes_bulk', {
+      rows: allRows.slice(i, i + BATCH),
+    })
+    if (error) return new Response(`DB error: ${error.message}`, { status: 500 })
+  }
 
   // ─── 4. Recalculer toutes les stats ──────────────────────────────────────────
   const [{ error: rpcErr }, { error: extErr }] = await Promise.all([
