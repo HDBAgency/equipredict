@@ -33,7 +33,9 @@ FEATURES: list[str] = [
     "raw_weight_penalty",
     "raw_form_x_signal",
     "raw_jockey_x_trainer",
-    # raw_distance_fit, raw_track_fit, raw_jockey_track : activés quand schema cache OK
+    "raw_distance_fit",
+    "raw_track_fit",
+    "raw_jockey_track",
 ]
 
 NEUTRAL = 5.0
