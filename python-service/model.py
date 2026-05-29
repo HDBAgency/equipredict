@@ -121,7 +121,7 @@ def train(days: int = 90) -> dict:
     logger.info("Fetching %d days of race data…", days)
     df = fetch_training_data(days)
 
-    if len(df) < 200:
+    if len(df) < 30:
         return {"success": False, "reason": "insufficient_data", "rows": len(df)}
 
     result = _prepare(df)
