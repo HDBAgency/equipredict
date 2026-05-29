@@ -77,9 +77,10 @@ Deno.serve(async (req) => {
 
     for (const course of courses) {
       const courseNum = (course.numOrdre ?? course.numero) as number
-      const statut    = ((course.statut ?? '') as string).toUpperCase()
+      const statut            = ((course.statut ?? '') as string).toUpperCase()
+      const arriveeDefinitive = course.arriveeDefinitive === true
 
-      if (statut !== 'ARRIVEE' && statut !== 'ARRIVEE_DEFINITIVE') continue
+      if (!arriveeDefinitive && statut !== 'ARRIVEE' && statut !== 'ARRIVEE_DEFINITIVE') continue
 
       const raceId      = `pmu-R${reunionNum}-C${courseNum}`
       const raceType    = ((reunion.specialite ?? '') as string).toLowerCase()
