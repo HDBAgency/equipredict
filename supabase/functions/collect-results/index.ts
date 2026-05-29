@@ -250,14 +250,34 @@ Deno.serve(async (req) => {
     headers: { 'Content-Type': 'application/json' },
   })
 
-  // ─── 3. Sauvegarder via stored procedure (bypass schema cache PostgREST) ──────
-  const BATCH = 300
-  for (let i = 0; i < allRows.length; i += BATCH) {
-    const { error } = await supabase.rpc('upsert_race_outcomes_bulk', {
-      rows: allRows.slice(i, i + BATCH),
-    })
-    if (error) return new Response(`DB error: ${error.message}`, { status: 500 })
-  }
+  // ─── 3. Sauvegarder — colonnes originales uniquement (cache PostgREST) ─────────
+  // Les nouvelles colonnes (horse_name, hippodrome_code, etc.) seront ajoutées
+  // une fois que le schema cache PostgREST sera rechargé
+  const legacyRows = allRows.map(r => ({
+    race_id:              r.race_id,
+    race_date:            r.race_date,
+    horse_number:         r.horse_number,
+    finish_pos:           r.finish_pos,
+    jockey_name:          r.jockey_name,
+    trainer_name:         r.trainer_name,
+    raw_form:             r.raw_form,
+    raw_odds_rank:        r.raw_odds_rank,
+    raw_consist:          r.raw_consist,
+    raw_placement:        r.raw_placement,
+    raw_mvt:              r.raw_mvt,
+    raw_age:              r.raw_age,
+    raw_earnings:         r.raw_earnings,
+    raw_jockey_wr:        r.raw_jockey_wr,
+    raw_trainer_wr:       r.raw_trainer_wr,
+    raw_weight_penalty:   r.raw_weight_penalty,
+    raw_form_x_signal:    r.raw_form_x_signal,
+    raw_jockey_x_trainer: r.raw_jockey_x_trainer,
+  }))
+  const { error } = await supabase.from('race_outcomes').upsert(legacyRows, {
+    onConflict:       'race_id,horse_number',
+    ignoreDuplicates: true,
+  })
+  if (error) return new Response(`DB error: ${error.message}`, { status: 500 })
 
   // ─── 4. Recalculer toutes les stats ──────────────────────────────────────────
   const [{ error: rpcErr }, { error: extErr }] = await Promise.all([
