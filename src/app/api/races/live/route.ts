@@ -436,7 +436,17 @@ function buildLiveRace(
     const tStatScore  = winRateToScore(trainerStats.get(trainerKey), 15)
     const trainerWR   = tStatScore >= 0 ? tStatScore : scoreTrainer(h._trainer)
 
-    // 10. Poids de monte / handicap — 0-10 (galop uniquement)
+    // 10. Terrain (état de la piste) — avantage aux chevaux avec bonne forme sur terrain lourd
+    // Logique : terrain lourd = forme récente plus importante (les chevaux fatigués perdent plus)
+    // Terrain léger/bon = forme moins déterminante, classe (earnings) prend le dessus
+    let terrainBoost = 0
+    if (trackCondition === 'lourd' || trackCondition === 'très lourd') {
+      terrainBoost = (form - 5) * 0.15  // amplifie l'écart de forme sur terrain difficile
+    } else if (trackCondition === 'léger') {
+      terrainBoost = (earnings - 5) * 0.10  // terrain rapide favorise la classe
+    }
+
+    // 11 (ancien 10). Poids de monte / handicap — 0-10 (galop uniquement)
     let weightPenalty = 5
     if (h._weight > 0 && raceType === 'plat') {
       if      (h._weight <= 54) weightPenalty = 9.5
@@ -482,7 +492,7 @@ function buildLiveRace(
               + trackFit      * weights.w_track_fit
               + jockeyTrk     * weights.w_jockey_track
 
-    h.aiScore = Math.round(Math.min(100, Math.max(0, raw * 10)))
+    h.aiScore = Math.round(Math.min(100, Math.max(0, (raw + terrainBoost) * 10)))
     h.confidenceLevel = h.aiScore >= 70 ? 'fort' : h.aiScore >= 50 ? 'moyen' : 'faible'
 
     // Stocker les features brutes pour le service XGBoost

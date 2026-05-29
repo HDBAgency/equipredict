@@ -136,18 +136,24 @@ Deno.serve(async (req) => {
           const musicRaw = (p.musique ?? '') as string
           let formScore = 5
           if (musicRaw) {
-            const chars  = musicRaw.split('').filter(c => /[0-9aAdDbBpPT]/.test(c))
-            const recent = chars.slice(0, 5)
-            const pts = recent.reduce((acc, c) => {
-              if (c === '1') return acc + 10
-              if (c === '2') return acc + 8
-              if (c === '3') return acc + 6
-              if (/[4-6]/.test(c)) return acc + 4
-              if (/[7-9]/.test(c)) return acc + 2
-              if (c.toLowerCase() === 'a') return acc + 1
-              return acc
-            }, 0)
-            formScore = recent.length > 0 ? Math.min(10, pts / recent.length) : 5
+            const clean = musicRaw.replace(/\([^)]*\)/g, '')
+            const RECENCY = [1.0, 0.85, 0.70, 0.55, 0.40, 0.30, 0.20, 0.15, 0.10, 0.08]
+            let score = 0; let weight = 0; let count = 0
+            for (const ch of clean) {
+              if (count >= 10) break
+              let pts = -1
+              if (ch === 'p' || ch === 'P') pts = 7.5
+              else if (ch === '1') pts = 10
+              else if (ch === '2') pts = 8
+              else if (ch === '3') pts = 6
+              else if (ch >= '4' && ch <= '5') pts = 3
+              else if (ch >= '6' && ch <= '9') pts = 1
+              else if (ch === '0') pts = 0
+              else if ('DdTt'.includes(ch)) pts = 0
+              else if ('AaNn '.includes(ch)) continue
+              if (pts >= 0) { score += pts * RECENCY[count]; weight += 10 * RECENCY[count]; count++ }
+            }
+            formScore = weight > 0 ? (score / weight) * 10 : 5
           }
 
           const oddsRank = odds < 90 ? (1 - (odds - minOdds) / oddsRange) * 10 : 5
