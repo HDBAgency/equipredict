@@ -19,7 +19,7 @@ const PLAN_ICONS = { free: Zap, premium: Star, pro: Crown }
 const PLAN_LABELS = { free: 'Gratuit', premium: 'Premium', pro: 'Pro' }
 const PLAN_COLORS = {
   free:    'text-eq-muted bg-eq-surface border-eq-border',
-  premium: 'text-eq-violet bg-eq-violet/15 border-eq-violet/30',
+  premium: 'text-eq-green bg-eq-green/15 border-eq-green/30',
   pro:     'text-eq-amber bg-eq-amber/15 border-eq-amber/30',
 }
 
@@ -41,7 +41,7 @@ export default function AccountPage() {
           {/* User card */}
           <div className="bg-eq-card border border-eq-border rounded-2xl p-6">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-eq-violet to-eq-blue flex items-center justify-center text-white font-black text-xl">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-eq-green to-eq-blue flex items-center justify-center text-white font-black text-xl">
                 {user.name.charAt(0)}
               </div>
               <div>
@@ -142,7 +142,7 @@ export default function AccountPage() {
             {user.plan !== 'pro' && (
               <Link
                 href="/pricing"
-                className="flex items-center justify-center gap-2 bg-eq-violet hover:bg-eq-violet-light text-white font-bold py-3 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-eq-violet/25"
+                className="flex items-center justify-center gap-2 bg-eq-green hover:bg-eq-green-light text-white font-bold py-3 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-eq-green/25"
               >
                 <Crown className="w-4 h-4" />
                 Passer Premium

@@ -7,7 +7,7 @@ import { fetchRaceDetail } from '@/lib/race-detail'
 
 const RACE_TYPE_COLORS: Record<string, string> = {
   plat:        'bg-eq-blue/15   text-eq-blue   border-eq-blue/30',
-  trot:        'bg-eq-violet/15 text-eq-violet border-eq-violet/30',
+  trot:        'bg-eq-green/15 text-eq-green border-eq-green/30',
   obstacle:    'bg-eq-amber/15  text-eq-amber  border-eq-amber/30',
   steeplechase:'bg-eq-red/15    text-eq-red    border-eq-red/30',
 }
@@ -78,7 +78,7 @@ export default async function CoursePage({
                 {race.racecourse}
               </span>
               <span className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-eq-violet" />
+                <Clock className="w-4 h-4 text-eq-green" />
                 {formatTime(race.startTime)}
               </span>
               <span className="flex items-center gap-1.5">

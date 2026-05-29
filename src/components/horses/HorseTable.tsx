@@ -24,7 +24,7 @@ function FormDots({ form }: { form: HorseFormEntry[] }) {
 
 function ScoreBar({ score }: { score: number }) {
   let color = 'bg-eq-red'
-  if (score >= 70) color = 'bg-gradient-to-r from-eq-violet to-eq-green'
+  if (score >= 70) color = 'bg-gradient-to-r from-eq-green to-eq-green'
   else if (score >= 50) color = 'bg-eq-blue'
   return (
     <div className="flex items-center gap-2 min-w-[100px]">
@@ -35,7 +35,7 @@ function ScoreBar({ score }: { score: number }) {
         />
       </div>
       <span className={`text-xs font-bold tabular-nums w-6 text-right ${
-        score >= 70 ? 'text-eq-violet-light' : score >= 50 ? 'text-eq-blue' : 'text-eq-muted'
+        score >= 70 ? 'text-eq-green-light' : score >= 50 ? 'text-eq-blue' : 'text-eq-muted'
       }`}>
         {score}
       </span>
@@ -72,7 +72,7 @@ export function HorseTable({ horses }: { horses: Horse[] }) {
             <tr
               key={horse.id}
               className={`group transition-colors hover:bg-eq-surface/60 ${
-                horse.isRecommended ? 'bg-eq-violet/5' : ''
+                horse.isRecommended ? 'bg-eq-green/5' : ''
               }`}
             >
               {/* Numéro */}

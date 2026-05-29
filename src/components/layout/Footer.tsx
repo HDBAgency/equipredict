@@ -23,7 +23,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-2">
             <Link href="/" className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-eq-violet flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-eq-green flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-white" />
               </div>
               <span className="font-bold text-lg">Equi<span className="text-gradient">Predict</span></span>

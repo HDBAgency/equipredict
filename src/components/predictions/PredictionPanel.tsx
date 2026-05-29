@@ -61,7 +61,7 @@ function HorseDetailCard({ entry, medalIdx }: { entry: DetailedEntry; medalIdx: 
   return (
     <div className={`rounded-xl border p-4 space-y-3 ${
       isWinner
-        ? 'bg-gradient-to-b from-eq-violet/10 to-transparent border-eq-violet/40'
+        ? 'bg-gradient-to-b from-eq-green/10 to-transparent border-eq-green/40'
         : 'bg-eq-surface border-eq-border'
     }`}>
 
@@ -77,7 +77,7 @@ function HorseDetailCard({ entry, medalIdx }: { entry: DetailedEntry; medalIdx: 
           </div>
         </div>
         <div className="text-right shrink-0">
-          <div className={`text-xl font-black tabular-nums ${isWinner ? 'text-eq-violet-light' : 'text-eq-text'}`}>
+          <div className={`text-xl font-black tabular-nums ${isWinner ? 'text-eq-green-light' : 'text-eq-text'}`}>
             {entry.probability.toFixed(1)}%
           </div>
           <div className="text-[10px] text-eq-muted">probabilité</div>
@@ -104,7 +104,7 @@ function HorseDetailCard({ entry, medalIdx }: { entry: DetailedEntry; medalIdx: 
         </div>
         <div className="h-2 rounded-full bg-eq-border overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-eq-violet to-eq-blue transition-all duration-700"
+            className="h-full rounded-full bg-gradient-to-r from-eq-green to-eq-blue transition-all duration-700"
             style={{ width: `${(entry.factors.weighted / 10) * 100}%` }}
           />
         </div>
@@ -198,8 +198,8 @@ export function PredictionPanel({ prediction }: { prediction: DetailedPrediction
 
       {/* Header */}
       <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-eq-violet/20 border border-eq-violet/30 flex items-center justify-center">
-          <Brain className="w-4 h-4 text-eq-violet" />
+        <div className="w-8 h-8 rounded-lg bg-eq-green/20 border border-eq-green/30 flex items-center justify-center">
+          <Brain className="w-4 h-4 text-eq-green" />
         </div>
         <div>
           <h2 className="font-bold text-eq-text">Pronostic IA</h2>
@@ -218,7 +218,7 @@ export function PredictionPanel({ prediction }: { prediction: DetailedPrediction
       </div>
 
       {/* Race analysis */}
-      <div className="bg-eq-surface border-l-2 border-eq-violet rounded-r-xl p-4">
+      <div className="bg-eq-surface border-l-2 border-eq-green rounded-r-xl p-4">
         <h3 className="text-[11px] font-semibold uppercase tracking-wider text-eq-muted mb-2">
           Analyse de la course
         </h3>
