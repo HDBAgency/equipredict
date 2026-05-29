@@ -69,6 +69,9 @@ class HorseFeatures(BaseModel):
     raw_weight_penalty:   float = Field(default=5.0, ge=0, le=10)
     raw_form_x_signal:    float = Field(default=5.0, ge=0, le=10)
     raw_jockey_x_trainer: float = Field(default=5.0, ge=0, le=10)
+    raw_distance_fit:     float = Field(default=5.0, ge=0, le=10)
+    raw_track_fit:        float = Field(default=5.0, ge=0, le=10)
+    raw_jockey_track:     float = Field(default=5.0, ge=0, le=10)
 
 
 class PredictRequest(BaseModel):

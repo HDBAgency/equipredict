@@ -14,13 +14,15 @@ type ModelWeights = {
   w_placement: number; w_mvt: number; w_age: number; w_earnings: number
   w_jockey_wr: number; w_trainer_wr: number
   w_weight_penalty: number; w_form_x_signal: number; w_jockey_x_trainer: number
+  w_distance_fit: number; w_track_fit: number; w_jockey_track: number
 }
 
 const DEFAULT_WEIGHTS: ModelWeights = {
-  w_form: 0.20, w_odds_rank: 0.18, w_consist: 0.09,
-  w_placement: 0.08, w_mvt: 0.07, w_age: 0.06, w_earnings: 0.05,
-  w_jockey_wr: 0.07, w_trainer_wr: 0.05,
-  w_weight_penalty: 0.04, w_form_x_signal: 0.06, w_jockey_x_trainer: 0.05,
+  w_form: 0.09, w_odds_rank: 0.07, w_consist: 0.07,
+  w_placement: 0.07, w_mvt: 0.04, w_age: 0.04, w_earnings: 0.09,
+  w_jockey_wr: 0.07, w_trainer_wr: 0.06,
+  w_weight_penalty: 0.04, w_form_x_signal: 0.08, w_jockey_x_trainer: 0.05,
+  w_distance_fit: 0.08, w_track_fit: 0.08, w_jockey_track: 0.07,
 }
 
 async function loadModelWeights(): Promise<ModelWeights> {
@@ -49,39 +51,54 @@ async function loadModelWeights(): Promise<ModelWeights> {
 
 type RiderStat = { win_rate: number; total_races: number }
 
-async function loadRiderStats(): Promise<{
-  jockeys:  Map<string, RiderStat>
-  trainers: Map<string, RiderStat>
+type TrackStat = { win_rate: number; total_races: number }
+
+async function loadAllStats(): Promise<{
+  jockeys:      Map<string, RiderStat>
+  trainers:     Map<string, RiderStat>
+  horseDist:    Map<string, TrackStat>
+  horseTrack:   Map<string, TrackStat>
+  jockeyTrack:  Map<string, TrackStat>
 }> {
-  const emptyResult = { jockeys: new Map<string, RiderStat>(), trainers: new Map<string, RiderStat>() }
+  const empty = {
+    jockeys: new Map<string, RiderStat>(), trainers: new Map<string, RiderStat>(),
+    horseDist: new Map<string, TrackStat>(), horseTrack: new Map<string, TrackStat>(),
+    jockeyTrack: new Map<string, TrackStat>(),
+  }
   try {
     const base    = process.env.NEXT_PUBLIC_SUPABASE_URL
     const anon    = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     const headers = { apikey: anon, Authorization: `Bearer ${anon}` }
+    const cache4h = { next: { revalidate: 14400 } }
 
-    const [jRes, tRes] = await Promise.all([
-      fetch(`${base}/rest/v1/jockey_stats?select=jockey_name,win_rate,total_races`, {
-        headers, next: { revalidate: 14400 },  // 4h
-      }),
-      fetch(`${base}/rest/v1/trainer_stats?select=trainer_name,win_rate,total_races`, {
-        headers, next: { revalidate: 14400 },
-      }),
+    const [jRes, tRes, hdRes, htRes, jtRes] = await Promise.all([
+      fetch(`${base}/rest/v1/jockey_stats?select=jockey_name,win_rate,total_races`, { headers, ...cache4h }),
+      fetch(`${base}/rest/v1/trainer_stats?select=trainer_name,win_rate,total_races`, { headers, ...cache4h }),
+      fetch(`${base}/rest/v1/horse_distance_stats?select=horse_name,distance_range,win_rate,total_races`, { headers, ...cache4h }),
+      fetch(`${base}/rest/v1/horse_track_stats?select=horse_name,hippodrome_code,win_rate,total_races`, { headers, ...cache4h }),
+      fetch(`${base}/rest/v1/jockey_track_stats?select=jockey_name,hippodrome_code,win_rate,total_races`, { headers, ...cache4h }),
     ])
 
-    const jockeys  = new Map<string, RiderStat>()
-    const trainers = new Map<string, RiderStat>()
+    const jockeys     = new Map<string, RiderStat>()
+    const trainers    = new Map<string, RiderStat>()
+    const horseDist   = new Map<string, TrackStat>()
+    const horseTrack  = new Map<string, TrackStat>()
+    const jockeyTrack = new Map<string, TrackStat>()
 
-    if (jRes.ok) {
-      const rows = await jRes.json() as Array<{ jockey_name: string; win_rate: number; total_races: number }>
-      for (const r of rows) jockeys.set(r.jockey_name.toLowerCase(), { win_rate: r.win_rate, total_races: r.total_races })
-    }
-    if (tRes.ok) {
-      const rows = await tRes.json() as Array<{ trainer_name: string; win_rate: number; total_races: number }>
-      for (const r of rows) trainers.set(r.trainer_name.toLowerCase(), { win_rate: r.win_rate, total_races: r.total_races })
-    }
-    return { jockeys, trainers }
+    if (jRes.ok) for (const r of await jRes.json() as Array<{jockey_name:string;win_rate:number;total_races:number}>)
+      jockeys.set(r.jockey_name.toLowerCase(), { win_rate: r.win_rate, total_races: r.total_races })
+    if (tRes.ok) for (const r of await tRes.json() as Array<{trainer_name:string;win_rate:number;total_races:number}>)
+      trainers.set(r.trainer_name.toLowerCase(), { win_rate: r.win_rate, total_races: r.total_races })
+    if (hdRes.ok) for (const r of await hdRes.json() as Array<{horse_name:string;distance_range:string;win_rate:number;total_races:number}>)
+      horseDist.set(`${r.horse_name.toLowerCase()}_${r.distance_range}`, { win_rate: r.win_rate, total_races: r.total_races })
+    if (htRes.ok) for (const r of await htRes.json() as Array<{horse_name:string;hippodrome_code:string;win_rate:number;total_races:number}>)
+      horseTrack.set(`${r.horse_name.toLowerCase()}_${r.hippodrome_code}`, { win_rate: r.win_rate, total_races: r.total_races })
+    if (jtRes.ok) for (const r of await jtRes.json() as Array<{jockey_name:string;hippodrome_code:string;win_rate:number;total_races:number}>)
+      jockeyTrack.set(`${r.jockey_name.toLowerCase()}_${r.hippodrome_code}`, { win_rate: r.win_rate, total_races: r.total_races })
+
+    return { jockeys, trainers, horseDist, horseTrack, jockeyTrack }
   } catch {
-    return emptyResult
+    return empty
   }
 }
 
@@ -290,6 +307,18 @@ function winRateToScore(stat: RiderStat | undefined, minRaces: number): number {
 
 // ─── Build LiveRace from PMU course + participants ─────────────────────────────
 
+function distanceRange(dist: number): string {
+  if (dist < 1400) return 'sprint'
+  if (dist <= 2100) return 'mile'
+  return 'long'
+}
+
+function statScore(map: Map<string, TrackStat>, key: string, minRaces: number): number {
+  const s = map.get(key)
+  if (!s || s.total_races < minRaces) return 5
+  return Math.min(10, s.win_rate * 0.5)
+}
+
 function buildLiveRace(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   course: any,
@@ -299,12 +328,17 @@ function buildLiveRace(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   participants: any[],
   weights: ModelWeights = DEFAULT_WEIGHTS,
-  jockeyStats: Map<string, RiderStat> = new Map(),
-  trainerStats: Map<string, RiderStat> = new Map(),
+  jockeyStats:  Map<string, RiderStat>  = new Map(),
+  trainerStats: Map<string, RiderStat>  = new Map(),
+  horseDist:    Map<string, TrackStat>  = new Map(),
+  horseTrack:   Map<string, TrackStat>  = new Map(),
+  jockeyTrack:  Map<string, TrackStat>  = new Map(),
 ): LiveRace {
   const reunionNum: number = reunion.numOfficiel ?? 1
   const courseNum: number = course.numOrdre ?? course.numExterne ?? 1
   const raceId = `pmu-R${reunionNum}-C${courseNum}`
+  const hippoCode: string = ((reunion.hippodrome?.code ?? course.hippodrome?.code ?? '') as string).toUpperCase()
+  const raceDistance: number = (course.distance ?? 0) as number
 
   const discipline: string = (course.specialite ?? course.discipline ?? '').toUpperCase()
   const raceType: RaceType = SPECIALITE_MAP[discipline] ?? 'plat'
@@ -336,6 +370,7 @@ function buildLiveRace(
     raw_mvt: number; raw_age: number; raw_earnings: number
     raw_jockey_wr: number; raw_trainer_wr: number
     raw_weight_penalty: number; raw_form_x_signal: number; raw_jockey_x_trainer: number
+    raw_distance_fit: number; raw_track_fit: number; raw_jockey_track: number
   }
   type RichHorse = LiveHorse & {
     _formScore: number; _winRate: number; _placeRate: number
@@ -417,7 +452,20 @@ function buildLiveRace(
     // 12. Interaction jockey × trainer (effet duo élite) — 0-10
     const jockeyXTrainer = (jockeyWR * trainerWR) / 10
 
-    // Pondération finale — 12 facteurs, poids RankNet adaptatifs
+    // 13. Distance fit — taux victoire du cheval sur cette plage de distance — 0-10
+    const horseName   = h.name.toLowerCase()
+    const distKey     = `${horseName}_${distanceRange(raceDistance)}`
+    const distanceFit = statScore(horseDist, distKey, 3)
+
+    // 14. Track fit — taux victoire du cheval sur cet hippodrome — 0-10
+    const trackKey  = hippoCode ? `${horseName}_${hippoCode}` : ''
+    const trackFit  = trackKey ? statScore(horseTrack, trackKey, 2) : 5
+
+    // 15. Jockey × hippodrome — taux victoire du jockey sur cet hippodrome — 0-10
+    const jtKey      = hippoCode ? `${jockeyKey}_${hippoCode}` : ''
+    const jockeyTrk  = jtKey ? statScore(jockeyTrack, jtKey, 5) : 5
+
+    // Pondération finale — 15 facteurs, poids RankNet adaptatifs
     const raw = form          * weights.w_form
               + oddsRank      * weights.w_odds_rank
               + consist       * weights.w_consist
@@ -430,6 +478,9 @@ function buildLiveRace(
               + weightPenalty * weights.w_weight_penalty
               + formXSignal   * weights.w_form_x_signal
               + jockeyXTrainer * weights.w_jockey_x_trainer
+              + distanceFit   * weights.w_distance_fit
+              + trackFit      * weights.w_track_fit
+              + jockeyTrk     * weights.w_jockey_track
 
     h.aiScore = Math.round(Math.min(100, Math.max(0, raw * 10)))
     h.confidenceLevel = h.aiScore >= 70 ? 'fort' : h.aiScore >= 50 ? 'moyen' : 'faible'
@@ -441,6 +492,7 @@ function buildLiveRace(
       raw_jockey_wr: jockeyWR, raw_trainer_wr: trainerWR,
       raw_weight_penalty: weightPenalty, raw_form_x_signal: formXSignal,
       raw_jockey_x_trainer: jockeyXTrainer,
+      raw_distance_fit: distanceFit, raw_track_fit: trackFit, raw_jockey_track: jockeyTrk,
     }
   })
 
@@ -504,8 +556,11 @@ function buildLiveRace(
 async function fetchPMURaces(
   today: Date,
   weights: ModelWeights,
-  jockeyStats: Map<string, RiderStat>,
+  jockeyStats:  Map<string, RiderStat>,
   trainerStats: Map<string, RiderStat>,
+  horseDist:    Map<string, TrackStat> = new Map(),
+  horseTrack:   Map<string, TrackStat> = new Map(),
+  jockeyTrack:  Map<string, TrackStat> = new Map(),
 ): Promise<LiveRace[] | null> {
   const ddmmyyyy = toDDMMYYYY(today)
   const todayISO = today.toISOString().slice(0, 10)
@@ -536,7 +591,7 @@ async function fetchPMURaces(
         partData?.partants ??
         (course as { participants?: unknown[] }).participants ??
         []
-      return buildLiveRace(course, reunion, todayISO, participants, weights, jockeyStats, trainerStats)
+      return buildLiveRace(course, reunion, todayISO, participants, weights, jockeyStats, trainerStats, horseDist, horseTrack, jockeyTrack)
     })
   )
 
@@ -590,6 +645,7 @@ type RawFeatures = {
   raw_mvt: number; raw_age: number; raw_earnings: number
   raw_jockey_wr: number; raw_trainer_wr: number
   raw_weight_penalty: number; raw_form_x_signal: number; raw_jockey_x_trainer: number
+  raw_distance_fit: number; raw_track_fit: number; raw_jockey_track: number
 }
 
 async function applyXGBoostScores(races: LiveRace[]): Promise<LiveRace[]> {
@@ -655,11 +711,11 @@ async function applyXGBoostScores(races: LiveRace[]): Promise<LiveRace[]> {
 export async function GET(): Promise<NextResponse<LiveResponse>> {
   const now = new Date()
   // Les 3 chargements sont parallèles — overhead minimal
-  const [weights, { jockeys, trainers }] = await Promise.all([
+  const [weights, { jockeys, trainers, horseDist, horseTrack, jockeyTrack }] = await Promise.all([
     loadModelWeights(),
-    loadRiderStats(),
+    loadAllStats(),
   ])
-  let races = await fetchPMURaces(now, weights, jockeys, trainers)
+  let races = await fetchPMURaces(now, weights, jockeys, trainers, horseDist, horseTrack, jockeyTrack)
   const source: 'pmu' | 'mock' = races ? 'pmu' : 'mock'
   if (!races) races = buildMockLiveRaces()
 

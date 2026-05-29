@@ -14,12 +14,14 @@ const FACTORS = [
   'raw_form',   'raw_odds_rank',  'raw_consist',        'raw_placement',
   'raw_mvt',    'raw_age',        'raw_earnings',        'raw_jockey_wr',
   'raw_trainer_wr', 'raw_weight_penalty', 'raw_form_x_signal', 'raw_jockey_x_trainer',
+  'raw_distance_fit', 'raw_track_fit', 'raw_jockey_track',
 ] as const
 
 const KEYS = [
   'w_form',   'w_odds_rank',  'w_consist',        'w_placement',
   'w_mvt',    'w_age',        'w_earnings',        'w_jockey_wr',
   'w_trainer_wr', 'w_weight_penalty', 'w_form_x_signal', 'w_jockey_x_trainer',
+  'w_distance_fit', 'w_track_fit', 'w_jockey_track',
 ] as const
 
 type FactorKey = typeof FACTORS[number]
@@ -27,18 +29,21 @@ type WeightKey = typeof KEYS[number]
 
 // Plages autorisées par poids (empêche les dérives extrêmes)
 const BOUNDS: Record<WeightKey, [number, number]> = {
-  w_form:             [0.10, 0.35],
-  w_odds_rank:        [0.08, 0.32],
-  w_consist:          [0.03, 0.18],
-  w_placement:        [0.03, 0.16],
-  w_mvt:              [0.03, 0.16],
-  w_age:              [0.02, 0.12],
+  w_form:             [0.06, 0.25],
+  w_odds_rank:        [0.05, 0.25],
+  w_consist:          [0.02, 0.15],
+  w_placement:        [0.02, 0.14],
+  w_mvt:              [0.02, 0.12],
+  w_age:              [0.01, 0.10],
   w_earnings:         [0.02, 0.10],
-  w_jockey_wr:        [0.03, 0.18],
-  w_trainer_wr:       [0.02, 0.14],
-  w_weight_penalty:   [0.01, 0.10],
-  w_form_x_signal:    [0.02, 0.14],
-  w_jockey_x_trainer: [0.02, 0.12],
+  w_jockey_wr:        [0.02, 0.15],
+  w_trainer_wr:       [0.02, 0.12],
+  w_weight_penalty:   [0.01, 0.08],
+  w_form_x_signal:    [0.02, 0.12],
+  w_jockey_x_trainer: [0.01, 0.10],
+  w_distance_fit:     [0.03, 0.15],
+  w_track_fit:        [0.03, 0.15],
+  w_jockey_track:     [0.03, 0.14],
 }
 
 // Valeur neutre par défaut si un facteur est absent
@@ -174,6 +179,7 @@ Deno.serve(async () => {
       'raw_mvt',  'raw_age',       'raw_earnings',
       'raw_jockey_wr',    'raw_trainer_wr',
       'raw_weight_penalty', 'raw_form_x_signal', 'raw_jockey_x_trainer',
+      'raw_distance_fit', 'raw_track_fit', 'raw_jockey_track',
     ].join(','))
     .gte('race_date', since)
   if (oErr) return new Response(`outcomes error: ${oErr.message}`, { status: 500 })

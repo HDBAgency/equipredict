@@ -10,15 +10,18 @@ function toDDMMYYYY(d: Date) {
 }
 
 function toTitle(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/(?:^|[\s-])\S/g, c => c.toUpperCase())
-    .trim()
+  return s.toLowerCase().replace(/(?:^|[\s-])\S/g, c => c.toUpperCase()).trim()
 }
 
 function winRateToScore(winRate: number, minRaces: number, actualRaces: number): number {
   if (actualRaces < minRaces) return 5.0
   return Math.min(10, winRate * 0.5)
+}
+
+function distanceRange(dist: number): string {
+  if (dist < 1400) return 'sprint'
+  if (dist <= 2100) return 'mile'
+  return 'long'
 }
 
 Deno.serve(async (req) => {
@@ -32,17 +35,32 @@ Deno.serve(async (req) => {
     if (body.offset_days && typeof body.offset_days === 'number') offsetDays = Math.min(Math.max(0, body.offset_days), 365)
   } catch { /* ignore */ }
 
-  // ─── 1. Charger les stats jockey/trainer une seule fois ──────────────────────
-  const [{ data: jockeyData }, { data: trainerData }] = await Promise.all([
+  // ─── 1. Charger toutes les stats (jockey, trainer, cheval, hippodrome) ────────
+  const [
+    { data: jockeyData },
+    { data: trainerData },
+    { data: horseDistData },
+    { data: horseTrackData },
+    { data: jockeyTrackData },
+  ] = await Promise.all([
     supabase.from('jockey_stats').select('jockey_name, win_rate, total_races'),
     supabase.from('trainer_stats').select('trainer_name, win_rate, total_races'),
+    supabase.from('horse_distance_stats').select('horse_name, distance_range, win_rate, total_races'),
+    supabase.from('horse_track_stats').select('horse_name, hippodrome_code, win_rate, total_races'),
+    supabase.from('jockey_track_stats').select('jockey_name, hippodrome_code, win_rate, total_races'),
   ])
 
-  const jockeyMap  = new Map<string, { win_rate: number; total_races: number }>()
-  const trainerMap = new Map<string, { win_rate: number; total_races: number }>()
+  const jockeyMap     = new Map<string, { win_rate: number; total_races: number }>()
+  const trainerMap    = new Map<string, { win_rate: number; total_races: number }>()
+  const horseDistMap  = new Map<string, { win_rate: number; total_races: number }>()
+  const horseTrackMap = new Map<string, { win_rate: number; total_races: number }>()
+  const jockeyTrackMap = new Map<string, { win_rate: number; total_races: number }>()
 
-  for (const j of jockeyData  ?? []) jockeyMap.set(j.jockey_name.toLowerCase(),  { win_rate: j.win_rate,  total_races: j.total_races })
+  for (const j of jockeyData  ?? []) jockeyMap.set(j.jockey_name.toLowerCase(), { win_rate: j.win_rate, total_races: j.total_races })
   for (const t of trainerData ?? []) trainerMap.set(t.trainer_name.toLowerCase(), { win_rate: t.win_rate, total_races: t.total_races })
+  for (const h of horseDistData  ?? []) horseDistMap.set(`${h.horse_name.toLowerCase()}_${h.distance_range}`, { win_rate: h.win_rate, total_races: h.total_races })
+  for (const h of horseTrackData ?? []) horseTrackMap.set(`${h.horse_name.toLowerCase()}_${h.hippodrome_code}`, { win_rate: h.win_rate, total_races: h.total_races })
+  for (const j of jockeyTrackData ?? []) jockeyTrackMap.set(`${j.jockey_name.toLowerCase()}_${j.hippodrome_code}`, { win_rate: j.win_rate, total_races: j.total_races })
 
   // ─── 2. Récupérer les programmes PMU pour chaque jour ───────────────────────
   const allRows: Record<string, unknown>[] = []
@@ -67,9 +85,10 @@ Deno.serve(async (req) => {
     const rows: Record<string, unknown>[] = []
 
     for (const reunion of (reunions as Record<string, unknown>[])) {
-      const reunionNum = (reunion.numOfficiel ?? reunion.numOrdre ?? reunion.numExterne) as number
-      const raceType   = ((reunion.specialite ?? '') as string).toLowerCase()
-      const courses    = (reunion.courses ?? []) as Record<string, unknown>[]
+      const reunionNum    = (reunion.numOfficiel ?? reunion.numOrdre ?? reunion.numExterne) as number
+      const raceType      = ((reunion.specialite ?? '') as string).toLowerCase()
+      const hippoCode     = ((reunion.hippodrome as Record<string,string>|null)?.code ?? '').toUpperCase()
+      const courses       = (reunion.courses ?? []) as Record<string, unknown>[]
 
       for (const course of courses) {
         const courseNum         = (course.numOrdre ?? course.numExterne) as number
@@ -78,9 +97,9 @@ Deno.serve(async (req) => {
 
         if (!arriveeDefinitive && statut !== 'ARRIVEE' && statut !== 'ARRIVEE_DEFINITIVE') continue
 
-        const raceId = `pmu-${raceDate}-R${reunionNum}-C${courseNum}`
+        const raceId       = `pmu-${raceDate}-R${reunionNum}-C${courseNum}`
+        const raceDistance = (course.distance ?? 0) as number
 
-        // Les participants avec ordreArrivee sont dans un endpoint séparé
         let participants: Record<string, unknown>[]
         try {
           const pr = await fetch(`${PMU_BASE}/${dateStr}/R${reunionNum}/C${courseNum}/participants`)
@@ -107,18 +126,12 @@ Deno.serve(async (req) => {
           const finishPos = (p.ordreArrivee ?? 0) as number
           if (!finishPos || finishPos <= 0) continue
 
-          const num  = (p.numPmu ?? p.numero) as number
-          const odds = ((p.dernierRapportDirect as Record<string,number>|null)?.rapportDirect
-                        ?? p.rapport
-                        ?? 99) as number
+          const num       = (p.numPmu ?? p.numero) as number
+          const horseName = toTitle((p.nom ?? '') as string).trim() || null
+          const odds      = ((p.dernierRapportDirect as Record<string,number>|null)?.rapportDirect ?? p.rapport ?? 99) as number
 
-          const jockeyRaw = toTitle(
-            (p.driver ?? p.jockey ?? p.nomDriver ?? p.nomJockey ?? '') as string
-          ).trim() || null
-
-          const trainerRaw = toTitle(
-            ((p.entraineur as string | null) ?? p.nomEntraineur ?? '') as string
-          ).trim() || null
+          const jockeyRaw  = toTitle((p.driver ?? p.jockey ?? p.nomDriver ?? p.nomJockey ?? '') as string).trim() || null
+          const trainerRaw = toTitle(((p.entraineur as string | null) ?? p.nomEntraineur ?? '') as string).trim() || null
 
           const musicRaw = (p.musique ?? '') as string
           let formScore = 5
@@ -183,10 +196,29 @@ Deno.serve(async (req) => {
           const rawFormXSignal    = (formScore * oddsRank) / 10
           const rawJockeyXTrainer = (rawJockeyWR * rawTrainerWR) / 10
 
+          // ── 3 nouveaux facteurs ──────────────────────────────────────────────
+          // Distance fit : taux de victoire du cheval sur cette plage de distance
+          const distKey  = horseName ? `${horseName.toLowerCase()}_${distanceRange(raceDistance)}` : ''
+          const distStat = distKey ? horseDistMap.get(distKey) : undefined
+          const rawDistanceFit = winRateToScore(distStat?.win_rate ?? 0, 3, distStat?.total_races ?? 0)
+
+          // Track fit : taux de victoire du cheval sur cet hippodrome
+          const trackKey  = horseName && hippoCode ? `${horseName.toLowerCase()}_${hippoCode}` : ''
+          const trackStat = trackKey ? horseTrackMap.get(trackKey) : undefined
+          const rawTrackFit = winRateToScore(trackStat?.win_rate ?? 0, 2, trackStat?.total_races ?? 0)
+
+          // Jockey×track : taux de victoire du jockey sur cet hippodrome
+          const jtKey  = jockeyKey && hippoCode ? `${jockeyKey}_${hippoCode}` : ''
+          const jtStat = jtKey ? jockeyTrackMap.get(jtKey) : undefined
+          const rawJockeyTrack = winRateToScore(jtStat?.win_rate ?? 0, 5, jtStat?.total_races ?? 0)
+
           rows.push({
             race_id:              raceId,
             race_date:            raceDate,
             horse_number:         num,
+            horse_name:           horseName,
+            hippodrome_code:      hippoCode || null,
+            race_distance:        raceDistance || null,
             finish_pos:           finishPos,
             jockey_name:          jockeyRaw,
             trainer_name:         trainerRaw,
@@ -202,6 +234,9 @@ Deno.serve(async (req) => {
             raw_weight_penalty:   weightPenalty,
             raw_form_x_signal:    rawFormXSignal,
             raw_jockey_x_trainer: rawJockeyXTrainer,
+            raw_distance_fit:     rawDistanceFit,
+            raw_track_fit:        rawTrackFit,
+            raw_jockey_track:     rawJockeyTrack,
           })
         }
       }
@@ -215,22 +250,28 @@ Deno.serve(async (req) => {
     headers: { 'Content-Type': 'application/json' },
   })
 
-  // ─── 3. Sauvegarder les résultats ────────────────────────────────────────────
+  // ─── 3. Sauvegarder (upsert — met à jour les lignes existantes) ──────────────
   const { error } = await supabase.from('race_outcomes').upsert(allRows, {
     onConflict:       'race_id,horse_number',
-    ignoreDuplicates: true,
+    ignoreDuplicates: false,
   })
   if (error) return new Response(`DB error: ${error.message}`, { status: 500 })
 
-  // ─── 4. Recalculer jockey_stats + trainer_stats ──────────────────────────────
-  const { error: rpcErr } = await supabase.rpc('refresh_rider_stats')
-  if (rpcErr) console.error('refresh_rider_stats error:', rpcErr.message)
+  // ─── 4. Recalculer toutes les stats ──────────────────────────────────────────
+  const [{ error: rpcErr }, { error: extErr }] = await Promise.all([
+    supabase.rpc('refresh_rider_stats'),
+    supabase.rpc('refresh_extended_stats'),
+  ])
+  if (rpcErr)  console.error('refresh_rider_stats error:',    rpcErr.message)
+  if (extErr)  console.error('refresh_extended_stats error:', extErr.message)
 
   return new Response(JSON.stringify({
-    collected:       allRows.length,
-    days:            dayResults,
-    jockey_stats_ok: !rpcErr,
-    jockey_loaded:   jockeyMap.size,
-    trainer_loaded:  trainerMap.size,
+    collected:        allRows.length,
+    days:             dayResults,
+    jockey_stats_ok:  !rpcErr,
+    extended_ok:      !extErr,
+    jockey_loaded:    jockeyMap.size,
+    horse_dist_loaded: horseDistMap.size,
+    horse_track_loaded: horseTrackMap.size,
   }), { headers: { 'Content-Type': 'application/json' } })
 })
