@@ -136,6 +136,8 @@ def train(days: int = 90) -> dict:
     if len(df) < 30:
         return {"success": False, "reason": "insufficient_data", "rows": len(df)}
 
+    logger.info("Fetched %d rows from Supabase", len(df))
+
     result = _prepare(df)
     if result[0] is None:
         return {"success": False, "reason": "preparation_failed"}
@@ -188,6 +190,7 @@ def train(days: int = 90) -> dict:
 
     return {
         "success":             True,
+        "rows_fetched":        len(df),
         "n_estimators":        best_iter,
         "train_races":         n_train,
         "val_races":           n_races - n_train,
