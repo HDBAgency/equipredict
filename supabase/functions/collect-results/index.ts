@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
 
         if (!arriveeDefinitive && statut !== 'ARRIVEE' && statut !== 'ARRIVEE_DEFINITIVE') continue
 
-        const raceId = `pmu-R${reunionNum}-C${courseNum}`
+        const raceId = `pmu-${raceDate}-R${reunionNum}-C${courseNum}`
 
         // Les participants avec ordreArrivee sont dans un endpoint séparé
         let participants: Record<string, unknown>[]
