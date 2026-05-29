@@ -29,7 +29,7 @@ export default async function DashboardProPage({
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-2xl sm:text-3xl font-black text-eq-text">COURSES DU JOUR</h1>
-            <span className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)' }}>
+            <span className="px-3 py-1 rounded-full text-xs font-bold text-white bg-eq-green">
               PRO
             </span>
           </div>

@@ -43,8 +43,8 @@ export function ProPaywallGate({ children }: Props) {
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4">
       <div className="text-center max-w-md">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 border" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(167,139,250,0.15))', borderColor: 'rgba(124,58,237,0.3)' }}>
-          <Lock className="w-8 h-8" style={{ color: '#A78BFA' }} />
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-eq-green/30 bg-eq-green/10">
+          <Lock className="w-8 h-8 text-eq-green" />
         </div>
         <h2 className="text-2xl font-black text-eq-text mb-3">Accès Pro requis</h2>
         <p className="text-white text-sm mb-8">
@@ -53,8 +53,7 @@ export function ProPaywallGate({ children }: Props) {
         </p>
         <Link
           href="/pricing"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white transition-all hover:opacity-90"
-          style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)' }}
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white bg-eq-green transition-all hover:opacity-90"
         >
           Passer Pro
           <ArrowRight className="w-4 h-4" />
