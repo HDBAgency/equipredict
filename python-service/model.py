@@ -41,25 +41,37 @@ NEUTRAL = 5.0
 # ─── Supabase REST (PostgREST) via httpx ─────────────────────────────────────
 
 def _supabase_select(table: str, columns: list[str], filters: dict[str, str] | None = None) -> list[dict]:
-    """
-    Appel GET PostgREST.
-    filters = {"race_date": "gte.2025-01-01"} → ?race_date=gte.2025-01-01
-    """
     url     = os.environ["SUPABASE_URL"].rstrip("/")
     key     = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
     headers = {
         "apikey":        key,
         "Authorization": f"Bearer {key}",
+        "Prefer":        "count=none",
     }
-    params: dict[str, str] = {"select": ",".join(columns)}
-    if filters:
-        params.update(filters)
+    all_rows: list[dict] = []
+    page_size = 5000
+    offset    = 0
 
-    with httpx.Client(timeout=30.0) as client:
-        resp = client.get(f"{url}/rest/v1/{table}", headers=headers, params=params)
+    with httpx.Client(timeout=60.0) as client:
+        while True:
+            params: dict[str, str] = {
+                "select": ",".join(columns),
+                "limit":  str(page_size),
+                "offset": str(offset),
+            }
+            if filters:
+                params.update(filters)
+            resp = client.get(f"{url}/rest/v1/{table}", headers=headers, params=params)
+            resp.raise_for_status()
+            batch = resp.json()
+            if not batch:
+                break
+            all_rows.extend(batch)
+            if len(batch) < page_size:
+                break
+            offset += page_size
 
-    resp.raise_for_status()
-    return resp.json()
+    return all_rows
 
 
 # ─── Collecte des données ─────────────────────────────────────────────────────
