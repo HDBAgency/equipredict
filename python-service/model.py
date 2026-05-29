@@ -49,7 +49,7 @@ def _supabase_select(table: str, columns: list[str], filters: dict[str, str] | N
         "Prefer":        "count=none",
     }
     all_rows: list[dict] = []
-    page_size = 5000
+    page_size = 1000  # plafond Supabase PostgREST par défaut
     offset    = 0
 
     with httpx.Client(timeout=60.0) as client:
