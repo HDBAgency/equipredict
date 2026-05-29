@@ -25,16 +25,19 @@ function winRateToScore(winRate: number, minRaces: number, actualRaces: number):
   return Math.min(10, winRate * 0.5)
 }
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE)
 
-  const today    = new Date()
-  const dateStr  = toDDMMYYYY(today)
-  const raceDate = today.toISOString().slice(0, 10)
+  // Paramètres optionnels : days_back (défaut 1 = aujourd'hui seulement)
+  let daysBack = 1
+  try {
+    const body = await req.json().catch(() => ({}))
+    if (body.days_back && typeof body.days_back === 'number') {
+      daysBack = Math.min(Math.max(1, body.days_back), 90)
+    }
+  } catch { /* ignore */ }
 
-  // ─── 1. Charger les stats jockey/trainer AVANT traitement ────────────────────
-  //    (basées sur données historiques — avant aujourd'hui)
-  //    Utilisées pour calculer raw_jockey_wr et raw_trainer_wr pour les courses d'aujourd'hui
+  // ─── 1. Charger les stats jockey/trainer une seule fois ──────────────────────
   const [{ data: jockeyData }, { data: trainerData }] = await Promise.all([
     supabase.from('jockey_stats').select('jockey_name, win_rate, total_races'),
     supabase.from('trainer_stats').select('trainer_name, win_rate, total_races'),
@@ -46,20 +49,27 @@ Deno.serve(async () => {
   for (const j of jockeyData  ?? []) jockeyMap.set(j.jockey_name.toLowerCase(),  { win_rate: j.win_rate,  total_races: j.total_races })
   for (const t of trainerData ?? []) trainerMap.set(t.trainer_name.toLowerCase(), { win_rate: t.win_rate, total_races: t.total_races })
 
-  // ─── 2. Récupérer le programme PMU du jour ───────────────────────────────────
-  let programme: Record<string, unknown>
-  try {
-    const r = await fetch(`${PMU_BASE}/${dateStr}`)
-    if (!r.ok) return new Response(`PMU fetch failed: ${r.status}`, { status: 500 })
-    programme = await r.json()
-  } catch (e) {
-    return new Response(`PMU fetch error: ${e}`, { status: 500 })
-  }
+  // ─── 2. Récupérer les programmes PMU pour chaque jour ───────────────────────
+  const allRows: Record<string, unknown>[] = []
+  const results: Record<string, number> = {}
 
-  const reunions = (programme?.programme as Record<string, unknown>)?.reunions
-    ?? (programme as Record<string, unknown>)?.reunions
-    ?? []
-  const rows: Record<string, unknown>[] = []
+  for (let d = daysBack - 1; d >= 0; d--) {
+    const date     = new Date()
+    date.setDate(date.getDate() - d)
+    const dateStr  = toDDMMYYYY(date)
+    const raceDate = date.toISOString().slice(0, 10)
+
+    let programme: Record<string, unknown>
+    try {
+      const r = await fetch(`${PMU_BASE}/${dateStr}`)
+      if (!r.ok) { results[raceDate] = 0; continue }
+      programme = await r.json()
+    } catch { results[raceDate] = 0; continue }
+
+    const reunions = (programme?.programme as Record<string, unknown>)?.reunions
+      ?? (programme as Record<string, unknown>)?.reunions
+      ?? []
+    const rows: Record<string, unknown>[] = []
 
   for (const reunion of (reunions as Record<string, unknown>[])) {
     const reunionNum = (reunion.numOrdre ?? reunion.numero) as number
@@ -113,8 +123,8 @@ Deno.serve(async () => {
         const musicRaw = (p.musique ?? '') as string
         let formScore = 5
         if (musicRaw) {
-          const results = musicRaw.split('').filter(c => /[0-9aAdDbBpPT]/.test(c))
-          const recent  = results.slice(0, 5)
+          const chars  = musicRaw.split('').filter(c => /[0-9aAdDbBpPT]/.test(c))
+          const recent = chars.slice(0, 5)
           const pts = recent.reduce((acc, c) => {
             if (c === '1') return acc + 10
             if (c === '2') return acc + 8
@@ -207,27 +217,30 @@ Deno.serve(async () => {
         })
       }
     }
-  }
+  } // fin boucle reunions
 
-  if (!rows.length) return new Response(JSON.stringify({ collected: 0 }))
+    results[raceDate] = rows.length
+    allRows.push(...rows)
+  } // fin boucle jours
+
+  if (!allRows.length) return new Response(JSON.stringify({ collected: 0, days: results }))
 
   // ─── 3. Sauvegarder les résultats ────────────────────────────────────────────
-  const { error } = await supabase.from('race_outcomes').upsert(rows, {
+  const { error } = await supabase.from('race_outcomes').upsert(allRows, {
     onConflict:       'race_id,horse_number',
     ignoreDuplicates: true,
   })
   if (error) return new Response(`DB error: ${error.message}`, { status: 500 })
 
   // ─── 4. Recalculer jockey_stats + trainer_stats (fenêtre 90 jours) ──────────
-  //    La fonction SQL agrège race_outcomes → jockey/trainer stats
   const { error: rpcErr } = await supabase.rpc('refresh_rider_stats')
   if (rpcErr) {
     console.error('refresh_rider_stats error:', rpcErr.message)
-    // Non bloquant : les stats seront recalculées lors du prochain cycle
   }
 
   return new Response(JSON.stringify({
-    collected:        rows.length,
+    collected:        allRows.length,
+    days:             results,
     jockey_stats_ok:  !rpcErr,
     jockey_loaded:    jockeyMap.size,
     trainer_loaded:   trainerMap.size,
