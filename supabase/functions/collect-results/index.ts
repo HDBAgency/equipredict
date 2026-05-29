@@ -24,12 +24,12 @@ function winRateToScore(winRate: number, minRaces: number, actualRaces: number):
 Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE)
 
-  let daysBack = 1
+  let daysBack   = 1
+  let offsetDays = 0
   try {
     const body = await req.json().catch(() => ({}))
-    if (body.days_back && typeof body.days_back === 'number') {
-      daysBack = Math.min(Math.max(1, body.days_back), 30)
-    }
+    if (body.days_back   && typeof body.days_back   === 'number') daysBack   = Math.min(Math.max(1, body.days_back),   30)
+    if (body.offset_days && typeof body.offset_days === 'number') offsetDays = Math.min(Math.max(0, body.offset_days), 365)
   } catch { /* ignore */ }
 
   // ─── 1. Charger les stats jockey/trainer une seule fois ──────────────────────
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
 
   for (let d = daysBack - 1; d >= 0; d--) {
     const date     = new Date()
-    date.setDate(date.getDate() - d)
+    date.setDate(date.getDate() - d - offsetDays)
     const dateStr  = toDDMMYYYY(date)
     const raceDate = date.toISOString().slice(0, 10)
 
